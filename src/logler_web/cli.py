@@ -8,25 +8,6 @@ import sys
 from pathlib import Path
 
 
-def find_dist_dir() -> Path:
-    """Find the frontend dist directory."""
-    # Check common locations
-    candidates = [
-        # Development: dist in project root
-        Path(__file__).parent.parent.parent / "dist",
-        # Installed: in share directory
-        Path(sys.prefix) / "share" / "logler-web" / "dist",
-        # User install
-        Path.home() / ".local" / "share" / "logler-web" / "dist",
-    ]
-    
-    for candidate in candidates:
-        if candidate.exists() and (candidate / "index.html").exists():
-            return candidate
-    
-    return candidates[0]  # Default to development location
-
-
 def main():
     """Run the logler-web server."""
     parser = argparse.ArgumentParser(
@@ -54,31 +35,21 @@ def main():
         action="store_true",
         help="Enable auto-reload for development",
     )
-    
+
     args = parser.parse_args()
-    
-    # Set environment variables
+
+    # Set log root
     os.environ["LOGLER_ROOT"] = str(Path(args.root).expanduser().resolve())
-    
-    # Find dist directory
-    dist_dir = find_dist_dir()
-    os.environ["LOGLER_WEB_DIST"] = str(dist_dir)
-    
-    if not dist_dir.exists():
-        print(f"Warning: Frontend dist not found at {dist_dir}", file=sys.stderr)
-        print("Run 'pnpm build' to build the frontend first.", file=sys.stderr)
-    
-    # Import uvicorn here to avoid import errors if not installed
+
     try:
         import uvicorn
     except ImportError:
-        print("Error: uvicorn not installed. Install with: pip install uvicorn[standard]", file=sys.stderr)
+        print("Error: uvicorn not installed.", file=sys.stderr)
         sys.exit(1)
-    
+
     print(f"Starting logler-web on http://{args.host}:{args.port}")
     print(f"Log root: {os.environ['LOGLER_ROOT']}")
-    print(f"Frontend: {dist_dir}")
-    
+
     uvicorn.run(
         "logler_web:app",
         host=args.host,

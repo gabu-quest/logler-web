@@ -34,24 +34,8 @@ except ImportError:
 # Configuration
 LOG_ROOT = Path(os.environ.get("LOGLER_ROOT", ".")).expanduser().resolve()
 
-def _find_dist_dir() -> Path:
-    """Find the frontend dist directory."""
-    import sys
-    # Check environment variable first
-    if env_dist := os.environ.get("LOGLER_WEB_DIST"):
-        return Path(env_dist)
-    # Development: dist in project root (two levels up from src/logler_web)
-    dev_dist = Path(__file__).parent.parent.parent / "dist"
-    if dev_dist.exists():
-        return dev_dist
-    # Installed: in share directory
-    installed_dist = Path(sys.prefix) / "share" / "logler-web" / "dist"
-    if installed_dist.exists():
-        return installed_dist
-    # Fallback
-    return dev_dist
-
-DIST_DIR = _find_dist_dir()
+# Static files directory (built frontend)
+DIST_DIR = Path(__file__).parent / "static"
 MAX_RETURNED_ENTRIES = 10000
 
 
