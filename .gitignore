@@ -33,3 +33,12 @@ Thumbs.db
 
 # Vite
 vite.config.ts.timestamp-*
+
+# Playwright
+playwright-report/
+test-results/
+
+# Python build artifacts
+*.egg-info/
+build/
+dist-pkg/

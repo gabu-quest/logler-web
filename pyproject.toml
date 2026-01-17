@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "logler-web"
 version = "0.1.0"
-description = "Web UI for Logler - Beautiful log viewer with Vue3 + Naive-UI"
+description = "Web interface for logler - log viewing with thread tracking and analysis"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
     {name = "Logler Contributors"},
 ]
-keywords = ["logs", "logging", "viewer", "web", "ui"]
+keywords = ["logs", "logging", "viewer", "monitoring", "debugging", "web"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -24,27 +24,24 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Debuggers",
     "Topic :: System :: Logging",
+    "Framework :: FastAPI",
 ]
 
 dependencies = [
-    "logler>=1.0.7",
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.30.0",
-    "websockets>=12.0",
-    "aiofiles>=23.0.0",
+    "logler>=1.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.20.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "black>=24.0.0",
-    "ruff>=0.3.0",
     "httpx>=0.28.0",
+    "ruff>=0.3.0",
 ]
 
 [project.scripts]
-logler-web = "backend.cli:main"
+logler-web = "logler_web.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/gabu-quest/logler-web"
@@ -52,11 +49,10 @@ Documentation = "https://github.com/gabu-quest/logler-web#readme"
 Repository = "https://github.com/gabu-quest/logler-web"
 
 [tool.hatch.build.targets.wheel]
-packages = ["backend"]
+packages = ["src/logler_web"]
 
-[tool.black]
-line-length = 100
-target-version = ['py39']
+[tool.hatch.build.targets.wheel.shared-data]
+"dist" = "share/logler-web/dist"
 
 [tool.ruff]
 line-length = 100
