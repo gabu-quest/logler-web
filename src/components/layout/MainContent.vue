@@ -4,6 +4,9 @@ import { PhListBullets, PhTreeStructure, PhChartBar, PhDatabase } from '@phospho
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import LogViewer from '@/components/log-viewer/LogViewer.vue'
+import HierarchyView from '@/components/hierarchy/HierarchyView.vue'
+import WaterfallView from '@/components/waterfall/WaterfallView.vue'
+import SqlView from '@/components/sql/SqlView.vue'
 
 const uiStore = useUiStore()
 const filesStore = useFilesStore()
@@ -38,7 +41,7 @@ function handleTabChange(value: string) {
               <PhTreeStructure :size="16" style="margin-right: 4px;" />
               Hierarchy
             </template>
-            <NEmpty description="Hierarchy view coming soon" />
+            <HierarchyView />
           </NTabPane>
 
           <NTabPane name="waterfall" tab="Waterfall">
@@ -46,7 +49,7 @@ function handleTabChange(value: string) {
               <PhChartBar :size="16" style="margin-right: 4px;" />
               Waterfall
             </template>
-            <NEmpty description="Waterfall view coming soon" />
+            <WaterfallView />
           </NTabPane>
 
           <NTabPane name="sql" tab="SQL">
@@ -54,7 +57,7 @@ function handleTabChange(value: string) {
               <PhDatabase :size="16" style="margin-right: 4px;" />
               SQL
             </template>
-            <NEmpty description="SQL query interface coming soon" />
+            <SqlView />
           </NTabPane>
         </NTabs>
       </template>

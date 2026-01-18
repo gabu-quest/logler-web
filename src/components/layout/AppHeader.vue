@@ -14,7 +14,7 @@ const logsStore = useLogsStore()
   <div class="header-container">
     <div class="header-left">
       <NSpace align="center" :size="12">
-        <img src="/favicon.png" alt="Logler" class="logo" width="28" height="28" />
+        <img src="/favicon.svg" alt="Logler" class="logo" width="28" height="28" />
         <NText strong style="font-size: 18px;">Logler</NText>
 
         <NButton

@@ -75,7 +75,7 @@ function common(mode: DsMode): GlobalThemeOverrides["common"] {
     iconColorPressed: m.text1,
     iconColorDisabled: m.textDisabled,
 
-    // @ts-expect-error - tolerated across Naive versions
+    // @ts-expect-error - focusColor may not be in all Naive UI versions
     focusColor: m.focusRing,
 
     // Typography
@@ -189,7 +189,6 @@ function components(mode: DsMode): GlobalThemeOverrides {
       textColor: "#e6f1ff",
       borderRadius: ds.radius.sm,
       boxShadow: ds.shadow[2],
-      // @ts-expect-error - some Naive versions support border; harmless if ignored
       border: `1px solid ${rgba(s.primary, mode === "dark" ? 0.35 : 0.25)}`,
     },
 

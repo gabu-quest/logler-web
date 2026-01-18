@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import {
   NModal,
-  NCard,
   NTabs,
   NTabPane,
   NInput,
@@ -26,7 +25,6 @@ import {
 } from '@phosphor-icons/vue'
 import { useFilesStore } from '@/stores/files'
 import { useLogsStore } from '@/stores/logs'
-import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   show: boolean
@@ -38,7 +36,6 @@ const emit = defineEmits<{
 
 const filesStore = useFilesStore()
 const logsStore = useLogsStore()
-const uiStore = useUiStore()
 
 const mode = ref<'browse' | 'glob'>('browse')
 const globInput = ref('')

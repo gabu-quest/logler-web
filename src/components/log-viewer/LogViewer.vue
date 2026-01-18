@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { NVirtualList, NText, NTag, NSpace } from 'naive-ui'
+import { ref, computed, watch, nextTick } from 'vue'
+import { NVirtualList, NText } from 'naive-ui'
 import LogEntry from './LogEntry.vue'
 import { useLogsStore } from '@/stores/logs'
 import { useUiStore } from '@/stores/ui'
