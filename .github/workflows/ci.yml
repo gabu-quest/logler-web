@@ -75,6 +75,26 @@ jobs:
       - name: Build frontend
         run: pnpm build
 
+      - name: Copy frontend to package
+        run: |
+          rm -rf src/logler_web/static
+          cp -r dist src/logler_web/static
+
+      - name: Start backend server
+        run: |
+          uv run uvicorn logler_web:app --host 127.0.0.1 --port 8080 &
+          # Wait for server to be ready
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:8080/api/files/browse > /dev/null; then
+              echo "Backend ready"
+              break
+            fi
+            echo "Waiting for backend..."
+            sleep 1
+          done
+        env:
+          LOGLER_ROOT: ${{ github.workspace }}/examples
+
       - name: Run E2E tests
         run: pnpm test:e2e
         env:
