@@ -52,13 +52,13 @@ jobs:
           cp -r dist src/logler_web/static
 
       - name: Build Python package
-        run: uv build
+        run: uv build -o dist-pkg
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: dist-pkg/
 
   publish:
     name: Publish to PyPI
