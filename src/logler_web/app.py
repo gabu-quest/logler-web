@@ -21,7 +21,13 @@ from pydantic import BaseModel
 from logler.parser import LogEntry, LogParser
 from logler.log_reader import LogReader
 from logler.tracker import ThreadTracker
-from logler.investigate import follow_thread_hierarchy, analyze_error_flow
+from logler.investigate import (
+    follow_thread_hierarchy,
+    analyze_error_flow,
+    search as logler_search,
+    find_patterns,
+    get_metadata,
+)
 
 # SqlEngine may not be available in all logler versions
 try:
@@ -141,6 +147,20 @@ def create_app() -> FastAPI:
         min_confidence: float = 0.0
         use_naming_patterns: bool = True
         use_temporal_inference: bool = True
+
+    class SearchRequest(BaseModel):
+        paths: List[str]
+        query: Optional[str] = None
+        level: Optional[str] = None
+        limit: Optional[int] = None
+        output_format: Optional[str] = None
+
+    class PatternsRequest(BaseModel):
+        paths: List[str]
+        min_occurrences: int = 2
+
+    class MetadataRequest(BaseModel):
+        paths: List[str]
 
     class SqlRequest(BaseModel):
         query: str
@@ -450,6 +470,33 @@ def create_app() -> FastAPI:
             "hierarchy": hierarchy,
             "error_analysis": error_analysis,
         }
+
+    @app.post("/api/search")
+    async def search_logs(request: SearchRequest):
+        """Search logs using logler's Rust-powered search engine."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        kwargs: Dict[str, Any] = {"files": validated_paths}
+        if request.query:
+            kwargs["query"] = request.query
+        if request.level:
+            kwargs["level"] = request.level
+        if request.limit:
+            kwargs["limit"] = request.limit
+        if request.output_format:
+            kwargs["output_format"] = request.output_format
+        return logler_search(**kwargs)
+
+    @app.post("/api/patterns")
+    async def detect_patterns(request: PatternsRequest):
+        """Detect repeated patterns in log files."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        return find_patterns(validated_paths, min_occurrences=request.min_occurrences)
+
+    @app.post("/api/metadata")
+    async def get_file_metadata(request: MetadataRequest):
+        """Get metadata about log files."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        return get_metadata(validated_paths)
 
     @app.post("/api/sql")
     async def execute_sql(request: SqlRequest):

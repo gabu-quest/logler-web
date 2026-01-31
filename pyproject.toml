@@ -28,7 +28,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "logler>=1.0.0",
+    "logler>=1.1.0",
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.20.0",
 ]

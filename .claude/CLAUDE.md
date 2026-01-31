@@ -47,6 +47,9 @@ All endpoints are in `backend/app.py`:
 - `POST /api/files/filter` - Filter entries
 - `GET /api/threads` - Thread list
 - `GET /api/traces` - Trace list
+- `POST /api/search` - Rust-powered log search (logler investigate)
+- `POST /api/patterns` - Detect repeated log patterns
+- `POST /api/metadata` - File metadata and stats
 - `POST /api/hierarchy` - Build hierarchy
 - `POST /api/sql` - Execute SQL query
 - `WS /ws` - WebSocket for live following
