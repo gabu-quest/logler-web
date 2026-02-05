@@ -4,9 +4,14 @@ import { NVirtualList, NText } from 'naive-ui'
 import LogEntry from './LogEntry.vue'
 import { useLogsStore } from '@/stores/logs'
 import { useUiStore } from '@/stores/ui'
+import { useFilesStore } from '@/stores/files'
+import { useInvestigationStore } from '@/stores/investigation'
+import type { LogEntry as LogEntryType } from '@/api/types'
 
 const logsStore = useLogsStore()
 const uiStore = useUiStore()
+const filesStore = useFilesStore()
+const investigationStore = useInvestigationStore()
 
 const virtualListRef = ref<InstanceType<typeof NVirtualList> | null>(null)
 
@@ -22,6 +27,10 @@ watch(
     }
   }
 )
+
+function handleEntryClick(entry: LogEntryType) {
+  investigationStore.loadContext(filesStore.activeFiles, entry)
+}
 </script>
 
 <template>
@@ -34,7 +43,7 @@ watch(
       class="log-list"
     >
       <template #default="{ item }">
-        <LogEntry :entry="item" />
+        <LogEntry :entry="item" @click="handleEntryClick" />
       </template>
     </NVirtualList>
 

@@ -1,13 +1,27 @@
 <script setup lang="ts">
-import { NButton, NSpace, NTag, NText, NBadge } from 'naive-ui'
-import { PhFolderOpen, PhPlugsConnected, PhPlugs } from '@phosphor-icons/vue'
+import { NButton, NSpace, NTag, NText, NBadge, NTooltip } from 'naive-ui'
+import { PhFolderOpen, PhPlugsConnected, PhPlugs, PhFingerprint, PhNetwork } from '@phosphor-icons/vue'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import { useLogsStore } from '@/stores/logs'
+import { useInvestigationStore } from '@/stores/investigation'
 
 const uiStore = useUiStore()
 const filesStore = useFilesStore()
 const logsStore = useLogsStore()
+const investigationStore = useInvestigationStore()
+
+function openIdExplorer() {
+  if (filesStore.hasActiveFiles) {
+    investigationStore.loadExtractedIds(filesStore.activeFiles)
+  }
+}
+
+function openCrossServiceTimeline() {
+  if (filesStore.hasActiveFiles) {
+    investigationStore.loadCrossServiceTimeline(filesStore.activeFiles)
+  }
+}
 </script>
 
 <template>
@@ -27,6 +41,38 @@ const logsStore = useLogsStore()
           </template>
           Open File
         </NButton>
+
+        <NTooltip v-if="filesStore.hasActiveFiles" trigger="hover">
+          <template #trigger>
+            <NButton
+              size="small"
+              quaternary
+              @click="openIdExplorer"
+            >
+              <template #icon>
+                <PhFingerprint :size="18" />
+              </template>
+              IDs
+            </NButton>
+          </template>
+          Browse all thread, correlation, and trace IDs
+        </NTooltip>
+
+        <NTooltip v-if="filesStore.hasActiveFiles" trigger="hover">
+          <template #trigger>
+            <NButton
+              size="small"
+              quaternary
+              @click="openCrossServiceTimeline"
+            >
+              <template #icon>
+                <PhNetwork :size="18" />
+              </template>
+              Services
+            </NButton>
+          </template>
+          View cross-service timeline
+        </NTooltip>
       </NSpace>
     </div>
 

@@ -18,6 +18,7 @@ export const useLogsStore = defineStore('logs', () => {
   const selectedLevels = ref<string[]>([...LOG_LEVELS])
   const correlationFilter = ref('')
   const threadFilter = ref('')
+  const traceFilter = ref('')
 
   // Computed filtered entries
   const filteredEntries = computed(() => {
@@ -49,6 +50,13 @@ export const useLogsStore = defineStore('logs', () => {
     if (threadFilter.value) {
       result = result.filter(
         (e) => e.thread_id?.includes(threadFilter.value)
+      )
+    }
+
+    // Filter by trace ID
+    if (traceFilter.value) {
+      result = result.filter(
+        (e) => e.trace_id?.includes(traceFilter.value)
       )
     }
 
@@ -159,11 +167,31 @@ export const useLogsStore = defineStore('logs', () => {
     threadFilter.value = filter
   }
 
+  function setTraceFilter(filter: string) {
+    traceFilter.value = filter
+  }
+
+  function setFilter(type: 'thread_id' | 'correlation_id' | 'trace_id', value: string) {
+    clearFilters()
+    switch (type) {
+      case 'thread_id':
+        threadFilter.value = value
+        break
+      case 'correlation_id':
+        correlationFilter.value = value
+        break
+      case 'trace_id':
+        traceFilter.value = value
+        break
+    }
+  }
+
   function clearFilters() {
     searchQuery.value = ''
     selectedLevels.value = [...LOG_LEVELS]
     correlationFilter.value = ''
     threadFilter.value = ''
+    traceFilter.value = ''
   }
 
   return {
@@ -175,6 +203,7 @@ export const useLogsStore = defineStore('logs', () => {
     selectedLevels,
     correlationFilter,
     threadFilter,
+    traceFilter,
     // Computed
     filteredEntries,
     stats,
@@ -188,6 +217,8 @@ export const useLogsStore = defineStore('logs', () => {
     toggleLevel,
     setCorrelationFilter,
     setThreadFilter,
+    setTraceFilter,
+    setFilter,
     clearFilters,
   }
 })

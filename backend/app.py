@@ -27,6 +27,12 @@ from logler.investigate import (
     search as logler_search,
     find_patterns,
     get_metadata,
+    follow_thread,
+    get_context,
+    extract_ids,
+    cross_service_timeline,
+    smart_sample,
+    compare_threads,
 )
 
 # SqlEngine may not be available in all logler versions
@@ -162,6 +168,35 @@ def create_app() -> FastAPI:
 
     class SqlRequest(BaseModel):
         query: str
+
+    class ContextRequest(BaseModel):
+        paths: List[str]
+        line_number: int
+        file_path: str
+        before: int = 10
+        after: int = 10
+
+    class FollowThreadRequest(BaseModel):
+        paths: List[str]
+        identifier: str
+        identifier_type: Optional[str] = None  # "thread_id", "correlation_id", "trace_id"
+
+    class ExtractIdsRequest(BaseModel):
+        paths: List[str]
+
+    class CompareThreadsRequest(BaseModel):
+        paths: List[str]
+        id1: str
+        id2: str
+
+    class CrossServiceTimelineRequest(BaseModel):
+        paths: List[str]
+        identifier: Optional[str] = None
+
+    class SmartSampleRequest(BaseModel):
+        paths: List[str]
+        strategy: str = "diverse"  # "errors_focused", "diverse", "representative", "chronological"
+        sample_size: int = 100
 
     # Helper functions
     def _parse_timestamp(ts: Any) -> Optional[datetime]:
@@ -550,6 +585,66 @@ def create_app() -> FastAPI:
                 "row_count": 0,
                 "error": str(e),
             }
+
+    @app.post("/api/context")
+    async def get_log_context(request: ContextRequest):
+        """Get surrounding context for a log entry."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        file_path = str(_ensure_within_root(Path(request.file_path)))
+        return get_context(
+            files=validated_paths,
+            line_number=request.line_number,
+            file_path=file_path,
+            before=request.before,
+            after=request.after,
+        )
+
+    @app.post("/api/thread/follow")
+    async def follow_thread_endpoint(request: FollowThreadRequest):
+        """Get all entries for a thread/correlation/trace."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        kwargs: Dict[str, Any] = {
+            "files": validated_paths,
+            "identifier": request.identifier,
+        }
+        if request.identifier_type:
+            kwargs["identifier_type"] = request.identifier_type
+        return follow_thread(**kwargs)
+
+    @app.post("/api/ids/extract")
+    async def extract_ids_endpoint(request: ExtractIdsRequest):
+        """Extract all unique IDs from log files."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        return extract_ids(files=validated_paths)
+
+    @app.post("/api/threads/compare")
+    async def compare_threads_endpoint(request: CompareThreadsRequest):
+        """Compare two request flows."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        return compare_threads(
+            files=validated_paths,
+            id1=request.id1,
+            id2=request.id2,
+        )
+
+    @app.post("/api/timeline/cross-service")
+    async def cross_service_timeline_endpoint(request: CrossServiceTimelineRequest):
+        """Build cross-service timeline view."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        kwargs: Dict[str, Any] = {"files": validated_paths}
+        if request.identifier:
+            kwargs["identifier"] = request.identifier
+        return cross_service_timeline(**kwargs)
+
+    @app.post("/api/sample")
+    async def smart_sample_endpoint(request: SmartSampleRequest):
+        """Smart sampling of log entries."""
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+        return smart_sample(
+            files=validated_paths,
+            strategy=request.strategy,
+            sample_size=request.sample_size,
+        )
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):

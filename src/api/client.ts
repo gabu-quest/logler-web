@@ -15,6 +15,18 @@ import type {
   HierarchyResponse,
   SqlRequest,
   SqlResponse,
+  ContextRequest,
+  ContextResponse,
+  FollowThreadRequest,
+  ThreadTimeline,
+  ExtractIdsRequest,
+  ExtractedIds,
+  CompareThreadsRequest,
+  ThreadComparison,
+  CrossServiceTimelineRequest,
+  CrossServiceTimeline,
+  SmartSampleRequest,
+  SmartSampleResponse,
 } from './types'
 
 const API_BASE = '/api'
@@ -90,6 +102,54 @@ export const api = {
   // SQL queries
   async executeSql(request: SqlRequest): Promise<SqlResponse> {
     return fetchJson(`${API_BASE}/sql`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Context
+  async getContext(request: ContextRequest): Promise<ContextResponse> {
+    return fetchJson(`${API_BASE}/context`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Thread following
+  async followThread(request: FollowThreadRequest): Promise<ThreadTimeline> {
+    return fetchJson(`${API_BASE}/thread/follow`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Extract IDs
+  async extractIds(request: ExtractIdsRequest): Promise<ExtractedIds> {
+    return fetchJson(`${API_BASE}/ids/extract`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Compare threads
+  async compareThreads(request: CompareThreadsRequest): Promise<ThreadComparison> {
+    return fetchJson(`${API_BASE}/threads/compare`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Cross-service timeline
+  async crossServiceTimeline(request: CrossServiceTimelineRequest): Promise<CrossServiceTimeline> {
+    return fetchJson(`${API_BASE}/timeline/cross-service`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Smart sampling
+  async smartSample(request: SmartSampleRequest): Promise<SmartSampleResponse> {
+    return fetchJson(`${API_BASE}/sample`, {
       method: 'POST',
       body: JSON.stringify(request),
     })

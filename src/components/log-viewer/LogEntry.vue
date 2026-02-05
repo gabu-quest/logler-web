@@ -7,6 +7,14 @@ const props = defineProps<{
   entry: LogEntryType
 }>()
 
+const emit = defineEmits<{
+  click: [entry: LogEntryType]
+}>()
+
+function handleClick() {
+  emit('click', props.entry)
+}
+
 const levelColors: Record<string, string> = {
   TRACE: '#808080',
   DEBUG: '#00e5ff',
@@ -37,7 +45,7 @@ const formattedTime = computed(() => {
 </script>
 
 <template>
-  <div class="log-entry">
+  <div class="log-entry" @click="handleClick">
     <div class="entry-header">
       <NSpace :size="8" align="center">
         <NText class="line-number" depth="3">{{ entry.line_number }}</NText>

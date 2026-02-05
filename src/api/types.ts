@@ -154,3 +154,118 @@ export interface SqlResponse {
   row_count: number
   error?: string
 }
+
+// Context API
+export interface ContextRequest {
+  paths: string[]
+  line_number: number
+  file_path: string
+  before?: number
+  after?: number
+}
+
+export interface ContextEntry extends LogEntry {
+  is_target: boolean
+}
+
+export interface ContextResponse {
+  entries: ContextEntry[]
+  target_line: number
+  file_path: string
+}
+
+// Thread Follow API
+export interface FollowThreadRequest {
+  paths: string[]
+  identifier: string
+  identifier_type?: 'thread_id' | 'correlation_id' | 'trace_id'
+}
+
+export interface ThreadTimeline {
+  identifier: string
+  identifier_type: string
+  entries: LogEntry[]
+  duration_ms: number | null
+  span_count: number
+  service_names: string[]
+  error_count: number
+  start_time: string | null
+  end_time: string | null
+}
+
+// Extract IDs API
+export interface ExtractIdsRequest {
+  paths: string[]
+}
+
+export interface IdInfo {
+  id: string
+  count: number
+  first_seen: string | null
+  last_seen: string | null
+}
+
+export interface ExtractedIds {
+  thread_ids: IdInfo[]
+  correlation_ids: IdInfo[]
+  trace_ids: IdInfo[]
+}
+
+// Compare Threads API
+export interface CompareThreadsRequest {
+  paths: string[]
+  id1: string
+  id2: string
+}
+
+export interface ThreadComparison {
+  id1: string
+  id2: string
+  timeline1: ThreadTimeline
+  timeline2: ThreadTimeline
+  duration_diff_ms: number | null
+  entry_count_diff: number
+  error_count_diff: number
+  common_services: string[]
+  unique_services_1: string[]
+  unique_services_2: string[]
+}
+
+// Cross-Service Timeline API
+export interface CrossServiceTimelineRequest {
+  paths: string[]
+  identifier?: string
+}
+
+export interface ServiceLane {
+  service_name: string
+  entries: LogEntry[]
+  start_time: string | null
+  end_time: string | null
+  duration_ms: number | null
+  error_count: number
+}
+
+export interface CrossServiceTimeline {
+  identifier: string | null
+  lanes: ServiceLane[]
+  total_duration_ms: number | null
+  start_time: string | null
+  end_time: string | null
+}
+
+// Smart Sample API
+export type SampleStrategy = 'errors_focused' | 'diverse' | 'representative' | 'chronological'
+
+export interface SmartSampleRequest {
+  paths: string[]
+  strategy?: SampleStrategy
+  sample_size?: number
+}
+
+export interface SmartSampleResponse {
+  entries: LogEntry[]
+  strategy: SampleStrategy
+  original_count: number
+  sample_count: number
+}

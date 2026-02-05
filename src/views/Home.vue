@@ -4,6 +4,11 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import MainContent from '@/components/layout/MainContent.vue'
 import FileBrowser from '@/components/file-browser/FileBrowser.vue'
+import ContextDrawer from '@/components/context/ContextDrawer.vue'
+import ThreadTimelinePanel from '@/components/thread/ThreadTimelinePanel.vue'
+import IdExplorer from '@/components/ids/IdExplorer.vue'
+import CompareView from '@/components/compare/CompareView.vue'
+import CrossServiceView from '@/components/cross-service/CrossServiceView.vue'
 import { useUiStore } from '@/stores/ui'
 
 const uiStore = useUiStore()
@@ -34,6 +39,21 @@ const uiStore = useUiStore()
     <FileBrowser
       v-model:show="uiStore.showFileBrowser"
     />
+
+    <!-- Context Drawer -->
+    <ContextDrawer />
+
+    <!-- Thread Timeline Panel -->
+    <ThreadTimelinePanel />
+
+    <!-- ID Explorer -->
+    <IdExplorer />
+
+    <!-- Compare View -->
+    <CompareView />
+
+    <!-- Cross-Service Timeline View -->
+    <CrossServiceView />
   </n-layout>
 </template>
 
