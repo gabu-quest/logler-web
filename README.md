@@ -1,17 +1,93 @@
 # Logler Web
 
-Web UI for [Logler](https://github.com/gabu-quest/logler) - Beautiful log viewer with Vue3 + Naive-UI.
+**Debug distributed systems like a pro.** A beautiful log viewer with AI-powered investigation tools.
 
-## Features
+![Log Viewer](https://via.placeholder.com/800x400?text=Add+Screenshot+Here)
 
-- **Log Viewer** - Virtualized rendering with color-coded log levels
-- **File Browser** - Navigate directories and search with glob patterns
-- **Multi-File Interleaving** - Open multiple files with merged timeline
-- **Filtering** - Search, level, thread, and correlation ID filters
-- **Live Following** - Real-time log updates via WebSocket
-- **Hierarchy View** - Thread/span tree visualization
-- **Waterfall View** - Timeline visualization
-- **SQL Queries** - Query logs with SQL using DuckDB
+## What Logler Does Best
+
+Logler is built for **structured JSON logs with distributed tracing fields** - the kind produced by OpenTelemetry, Jaeger, Zipkin, or custom instrumentation:
+
+```json
+{
+  "timestamp": "2024-01-15T10:00:00.100Z",
+  "level": "INFO",
+  "service": "api-gateway",
+  "trace_id": "trace-001",
+  "span_id": "span-gw-1",
+  "parent_span_id": null,
+  "correlation_id": "req-abc123",
+  "message": "Incoming request: GET /api/v1/user/12345/orders"
+}
+```
+
+With these fields, logler can:
+- **Build trace hierarchies** - See the full call tree across services
+- **Find bottlenecks** - Identify which span took the longest
+- **Follow correlations** - Track a request through 10+ services
+
+### Honest Assessment
+
+| Log Type | Logler Value |
+|----------|--------------|
+| OpenTelemetry/Jaeger traces | Excellent - hierarchy, bottleneck, correlation features shine |
+| Structured JSON (no trace IDs) | Good - SQL queries, filtering, smart sampling |
+| Plain text logs | Marginal - not much better than grep + jq |
+
+If your logs don't have `trace_id`/`span_id`/`parent_span_id`, you'll get a nice viewer but miss the killer features.
+
+## Quick Start
+
+```bash
+pip install logler-web
+logler-web --demo  # Opens browser with sample logs
+```
+
+The demo includes:
+- **Real logs**: Hadoop, OpenStack, Linux syslog, Zookeeper (from [Loghub](https://github.com/logpai/loghub))
+- **Trace demo**: Microservices trace with full hierarchy (shows logler's strengths)
+- **Incident demo**: Production outage scenario
+
+## Key Features
+
+### For Humans
+- **Smart Filtering** - Search, filter by level, thread, correlation ID
+- **Hierarchy View** - See parent-child relationships across services
+- **Waterfall Timeline** - Visualize request flow and bottlenecks
+- **SQL Queries** - Query your logs with DuckDB SQL
+- **Virtual Scrolling** - Handle millions of entries without lag
+
+### For AI Agents (LLM-First Design)
+
+All CLI commands output **structured JSON** - perfect for Claude, GPT, or your own scripts:
+
+```bash
+# Quick triage - is this bad?
+logler llm triage app.log
+# {"severity": "high", "error_rate": 0.20, "suggested_actions": [...]}
+
+# Build trace hierarchy (REQUIRES trace_id/span_id fields)
+logler llm hierarchy trace-xyz --files "*.log"
+# Returns full call tree with durations, error counts, bottleneck
+
+# Find the slow span
+logler llm bottleneck trace-xyz --files "*.log"
+# {"bottleneck": {"node_name": "db-query", "duration_ms": 850}}
+
+# SQL on logs
+logler llm sql "SELECT service, COUNT(*) FROM logs WHERE level='ERROR' GROUP BY service" -f "*.log"
+```
+
+## CLI Commands
+
+| Command | Best For | Needs Trace Fields? |
+|---------|----------|---------------------|
+| `logler llm triage` | Quick severity check | No |
+| `logler llm search` | Find specific logs | No |
+| `logler llm hierarchy` | Build trace tree | **Yes** |
+| `logler llm bottleneck` | Find slow spans | **Yes** |
+| `logler llm sql` | Ad-hoc queries | No |
+| `logler llm sample` | Smart log sampling | No |
 
 ## Installation
 
@@ -19,54 +95,55 @@ Web UI for [Logler](https://github.com/gabu-quest/logler) - Beautiful log viewer
 pip install logler-web
 ```
 
+Or with uv:
+```bash
+uv pip install logler-web
+```
+
 ## Usage
 
 ```bash
-# Start the web server
-logler-web --port 8080
+# View logs in current directory
+logler-web
 
-# With custom log root directory
-LOGLER_ROOT=/var/log logler-web
+# Specify a log directory
+logler-web --root /var/log
+
+# Start with demo data
+logler-web --demo
 ```
 
-## Development
+## Web UI Features
 
-### Prerequisites
-
-- Python 3.9+
-- Node.js 18+
-- pnpm (recommended) or npm
-
-### Setup
-
-```bash
-# Install Python dependencies
-pip install -e ".[dev]"
-
-# Install Node dependencies
-pnpm install
-
-# Start development servers
-pnpm dev          # Vue dev server (port 5173)
-logler-web --reload  # FastAPI server (port 8080)
-```
-
-### Build
-
-```bash
-# Build Vue frontend
-pnpm build
-
-# The built files go to dist/ and are served by FastAPI
-```
+- **Virtual scrolling** - Handle millions of entries
+- **Keyboard shortcuts** - `j/k` navigate, `?` help
+- **Deep linking** - Share URLs to specific lines
+- **Smart sampling** - Auto-suggest sampling for large files
+- **Live following** - Real-time log updates via WebSocket
 
 ## Tech Stack
 
-- **Frontend**: Vue 3, Naive UI, Phosphor Icons, Pinia
+- **Frontend**: Vue 3, Naive UI, Pinia
 - **Backend**: FastAPI, Uvicorn
-- **Design**: [the-style](https://github.com/gabu-quest/the-style) Cyberpunk edition
-- **Log Processing**: [logler](https://github.com/gabu-quest/logler) package
+- **Log Processing**: [logler](https://github.com/anthropics/logler) (Rust-powered)
+- **SQL Engine**: DuckDB
+
+## Why Logler?
+
+| Feature | grep | lnav | Datadog | Logler |
+|---------|------|------|---------|--------|
+| Local logs | OK | OK | No | OK |
+| Web UI | No | No | Yes | Yes |
+| Trace hierarchy | No | No | Yes | Yes |
+| SQL queries | No | Yes | Yes | Yes |
+| AI/LLM-ready JSON | No | No | No | Yes |
+| Free | Yes | Yes | No | Yes |
+| Works offline | Yes | Yes | No | Yes |
 
 ## License
 
 MIT
+
+## Acknowledgments
+
+Demo logs from [Loghub](https://github.com/logpai/loghub) (Apache License 2.0).
