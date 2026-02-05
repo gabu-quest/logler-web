@@ -9,9 +9,82 @@ import ThreadTimelinePanel from '@/components/thread/ThreadTimelinePanel.vue'
 import IdExplorer from '@/components/ids/IdExplorer.vue'
 import CompareView from '@/components/compare/CompareView.vue'
 import CrossServiceView from '@/components/cross-service/CrossServiceView.vue'
+import KeyboardHelpModal from '@/components/help/KeyboardHelpModal.vue'
 import { useUiStore } from '@/stores/ui'
+import { useNavigationStore } from '@/stores/navigation'
+import { useFilesStore } from '@/stores/files'
+import { useInvestigationStore } from '@/stores/investigation'
+import { useKeyboardShortcuts, type Shortcut } from '@/composables/useKeyboardShortcuts'
+import { useUrlState } from '@/composables/useUrlState'
 
 const uiStore = useUiStore()
+const navigationStore = useNavigationStore()
+const filesStore = useFilesStore()
+const investigationStore = useInvestigationStore()
+
+const shortcuts: Shortcut[] = [
+  {
+    key: 'j',
+    description: 'Next entry',
+    handler: () => navigationStore.focusNext(),
+    condition: () => filesStore.hasActiveFiles,
+  },
+  {
+    key: 'k',
+    description: 'Previous entry',
+    handler: () => navigationStore.focusPrev(),
+    condition: () => filesStore.hasActiveFiles,
+  },
+  {
+    key: 'Enter',
+    description: 'Open context',
+    handler: () => {
+      const entry = navigationStore.focusedEntry
+      if (entry) {
+        investigationStore.loadContext(filesStore.activeFiles, entry)
+      }
+    },
+    condition: () => navigationStore.focusedEntry !== null,
+  },
+  {
+    key: 'Escape',
+    description: 'Close panels',
+    handler: () => uiStore.closeAllPanels(),
+  },
+  {
+    key: '1',
+    description: 'Logs view',
+    handler: () => uiStore.setViewMode('logs'),
+  },
+  {
+    key: '2',
+    description: 'Hierarchy view',
+    handler: () => uiStore.setViewMode('hierarchy'),
+  },
+  {
+    key: '3',
+    description: 'Waterfall view',
+    handler: () => uiStore.setViewMode('waterfall'),
+  },
+  {
+    key: '4',
+    description: 'SQL view',
+    handler: () => uiStore.setViewMode('sql'),
+  },
+  {
+    key: 'o',
+    description: 'Open file',
+    handler: () => uiStore.openFileBrowser(),
+  },
+  {
+    key: '?',
+    description: 'Help',
+    handler: () => uiStore.toggleHelpModal(),
+  },
+]
+
+useKeyboardShortcuts(shortcuts)
+useUrlState()
 </script>
 
 <template>
@@ -54,6 +127,9 @@ const uiStore = useUiStore()
 
     <!-- Cross-Service Timeline View -->
     <CrossServiceView />
+
+    <!-- Keyboard Help Modal -->
+    <KeyboardHelpModal />
   </n-layout>
 </template>
 

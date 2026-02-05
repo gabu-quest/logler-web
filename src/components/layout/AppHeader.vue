@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { NButton, NSpace, NTag, NText, NBadge, NTooltip } from 'naive-ui'
+import { NButton, NSpace, NTag, NText, NBadge, NTooltip, NDivider } from 'naive-ui'
 import { PhFolderOpen, PhPlugsConnected, PhPlugs, PhFingerprint, PhNetwork } from '@phosphor-icons/vue'
+import SampleControls from '@/components/sample/SampleControls.vue'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import { useLogsStore } from '@/stores/logs'
@@ -73,6 +74,11 @@ function openCrossServiceTimeline() {
           </template>
           View cross-service timeline
         </NTooltip>
+
+        <template v-if="filesStore.hasActiveFiles">
+          <NDivider vertical />
+          <SampleControls />
+        </template>
       </NSpace>
     </div>
 

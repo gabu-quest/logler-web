@@ -5,6 +5,7 @@ import type { LogEntry as LogEntryType } from '@/api/types'
 
 const props = defineProps<{
   entry: LogEntryType
+  isFocused?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -45,7 +46,7 @@ const formattedTime = computed(() => {
 </script>
 
 <template>
-  <div class="log-entry" @click="handleClick">
+  <div class="log-entry" :class="{ 'is-focused': isFocused }" @click="handleClick">
     <div class="entry-header">
       <NSpace :size="8" align="center">
         <NText class="line-number" depth="3">{{ entry.line_number }}</NText>
@@ -99,6 +100,12 @@ const formattedTime = computed(() => {
 
 .log-entry:hover {
   background: rgba(255, 255, 255, 0.03);
+}
+
+.log-entry.is-focused {
+  background: rgba(0, 229, 255, 0.06);
+  border-left: 3px solid #00e5ff;
+  padding-left: 9px;
 }
 
 .entry-header {

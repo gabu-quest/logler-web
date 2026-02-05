@@ -4,6 +4,7 @@ import { api } from '@/api/client'
 import type { LogEntry, FilterOptions } from '@/api/types'
 import { useFilesStore } from './files'
 import { useUiStore } from './ui'
+import { useInvestigationStore } from './investigation'
 
 const LOG_LEVELS = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
 
@@ -22,7 +23,11 @@ export const useLogsStore = defineStore('logs', () => {
 
   // Computed filtered entries
   const filteredEntries = computed(() => {
-    let result = entries.value
+    // Use sampled entries if sampling is active
+    const investigationStore = useInvestigationStore()
+    let result = investigationStore.sampleActive && investigationStore.sampleData
+      ? investigationStore.sampleData.entries
+      : entries.value
 
     // Filter by search query
     if (searchQuery.value) {

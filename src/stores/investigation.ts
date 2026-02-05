@@ -52,6 +52,7 @@ export const useInvestigationStore = defineStore('investigation', () => {
   const sampleLoading = ref(false)
   const sampleError = ref<string | null>(null)
   const sampleData = ref<SmartSampleResponse | null>(null)
+  const sampleActive = ref(false)
 
   // Computed
   const hasContext = computed(() => contextData.value !== null)
@@ -195,6 +196,17 @@ export const useInvestigationStore = defineStore('investigation', () => {
     sampleSize.value = size
   }
 
+  function applySample() {
+    if (sampleData.value) {
+      sampleActive.value = true
+    }
+  }
+
+  function clearSample() {
+    sampleActive.value = false
+    sampleData.value = null
+  }
+
   return {
     // Context drawer
     showContextDrawer,
@@ -250,8 +262,11 @@ export const useInvestigationStore = defineStore('investigation', () => {
     sampleLoading,
     sampleError,
     sampleData,
+    sampleActive,
     loadSmartSample,
     setSampleStrategy,
     setSampleSize,
+    applySample,
+    clearSample,
   }
 })

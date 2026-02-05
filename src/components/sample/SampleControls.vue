@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NSpace, NSelect, NInputNumber, NButton, NTooltip, NText } from 'naive-ui'
-import { PhFunnel, PhSpinner } from '@phosphor-icons/vue'
+import { NSpace, NSelect, NInputNumber, NButton, NTooltip, NTag } from 'naive-ui'
+import { PhFunnel, PhSpinner, PhX } from '@phosphor-icons/vue'
 import { useInvestigationStore } from '@/stores/investigation'
 import { useFilesStore } from '@/stores/files'
 import type { SampleStrategy } from '@/api/types'
@@ -45,54 +45,76 @@ const sampleSize = computed({
 async function handleSample() {
   if (!filesStore.hasActiveFiles) return
   await investigationStore.loadSmartSample(filesStore.activeFiles)
+  investigationStore.applySample()
+}
+
+function handleClear() {
+  investigationStore.clearSample()
 }
 
 const sampleResult = computed(() => investigationStore.sampleData)
+const isSampled = computed(() => investigationStore.sampleActive)
 </script>
 
 <template>
   <div class="sample-controls">
     <NSpace align="center" :size="8">
-      <NTooltip trigger="hover">
-        <template #trigger>
-          <PhFunnel :size="16" style="flex-shrink: 0;" />
-        </template>
-        Smart sampling helps you focus on relevant log entries
-      </NTooltip>
+      <!-- Show sampled status when active -->
+      <template v-if="isSampled && sampleResult">
+        <NTag type="info" size="small" :bordered="false">
+          Sampled: {{ sampleResult.sample_count }} / {{ sampleResult.original_count }}
+        </NTag>
+        <NButton
+          size="tiny"
+          quaternary
+          @click="handleClear"
+        >
+          <template #icon>
+            <PhX :size="14" />
+          </template>
+          Show Full
+        </NButton>
+      </template>
 
-      <NSelect
-        v-model:value="selectedStrategy"
-        :options="strategyOptions"
-        size="small"
-        style="width: 140px;"
-      />
+      <!-- Show sampling controls when not active -->
+      <template v-else>
+        <NTooltip trigger="hover">
+          <template #trigger>
+            <PhFunnel :size="16" style="flex-shrink: 0;" />
+          </template>
+          Smart sampling helps you focus on relevant log entries
+        </NTooltip>
 
-      <NInputNumber
-        v-model:value="sampleSize"
-        :min="10"
-        :max="1000"
-        :step="10"
-        size="small"
-        style="width: 80px;"
-        placeholder="Size"
-      />
+        <NSelect
+          v-model:value="selectedStrategy"
+          :options="strategyOptions"
+          size="small"
+          style="width: 140px;"
+        />
 
-      <NButton
-        size="small"
-        type="primary"
-        :loading="investigationStore.sampleLoading"
-        :disabled="!filesStore.hasActiveFiles"
-        @click="handleSample"
-      >
-        <template #icon>
-          <PhSpinner v-if="investigationStore.sampleLoading" :size="14" class="spin" />
-        </template>
-        Sample
-      </NButton>
+        <NInputNumber
+          v-model:value="sampleSize"
+          :min="10"
+          :max="1000"
+          :step="10"
+          size="small"
+          style="width: 80px;"
+          placeholder="Size"
+        />
 
-      <NText v-if="sampleResult" depth="3" style="font-size: 12px;">
-        {{ sampleResult.sample_count }} / {{ sampleResult.original_count }}
-      </NText>
+        <NButton
+          size="small"
+          type="primary"
+          :loading="investigationStore.sampleLoading"
+          :disabled="!filesStore.hasActiveFiles"
+          @click="handleSample"
+        >
+          <template #icon>
+            <PhSpinner v-if="investigationStore.sampleLoading" :size="14" class="spin" />
+          </template>
+          Sample
+        </NButton>
+      </template>
     </NSpace>
   </div>
 </template>

@@ -2,16 +2,19 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { NVirtualList, NText } from 'naive-ui'
 import LogEntry from './LogEntry.vue'
+import LargeFileBanner from './LargeFileBanner.vue'
 import { useLogsStore } from '@/stores/logs'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import { useInvestigationStore } from '@/stores/investigation'
+import { useNavigationStore } from '@/stores/navigation'
 import type { LogEntry as LogEntryType } from '@/api/types'
 
 const logsStore = useLogsStore()
 const uiStore = useUiStore()
 const filesStore = useFilesStore()
 const investigationStore = useInvestigationStore()
+const navigationStore = useNavigationStore()
 
 const virtualListRef = ref<InstanceType<typeof NVirtualList> | null>(null)
 
@@ -28,6 +31,21 @@ watch(
   }
 )
 
+// Scroll to focused entry when it changes
+watch(
+  () => navigationStore.focusedIndex,
+  async (index) => {
+    if (index >= 0 && virtualListRef.value) {
+      await nextTick()
+      virtualListRef.value.scrollTo({ index, behavior: 'smooth' })
+    }
+  }
+)
+
+function isEntryFocused(index: number): boolean {
+  return navigationStore.focusedIndex === index
+}
+
 function handleEntryClick(entry: LogEntryType) {
   investigationStore.loadContext(filesStore.activeFiles, entry)
 }
@@ -35,6 +53,7 @@ function handleEntryClick(entry: LogEntryType) {
 
 <template>
   <div class="log-viewer">
+    <LargeFileBanner />
     <NVirtualList
       ref="virtualListRef"
       :items="entries"
@@ -42,8 +61,8 @@ function handleEntryClick(entry: LogEntryType) {
       item-resizable
       class="log-list"
     >
-      <template #default="{ item }">
-        <LogEntry :entry="item" @click="handleEntryClick" />
+      <template #default="{ item, index }">
+        <LogEntry :entry="item" :is-focused="isEntryFocused(index)" @click="handleEntryClick" />
       </template>
     </NVirtualList>
 
