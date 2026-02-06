@@ -111,6 +111,10 @@ def _glob_within_root(pattern: str, base_dir: Optional[str] = None) -> List[Path
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
+    # Re-read LOG_ROOT at creation time (env var may have been set after module import)
+    global LOG_ROOT
+    LOG_ROOT = Path(os.environ.get("LOGLER_ROOT", ".")).expanduser().resolve()
+
     app = FastAPI(
         title="Logler Web",
         description="Web UI for Logler - Beautiful log viewer",
