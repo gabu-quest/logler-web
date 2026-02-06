@@ -19,7 +19,26 @@ import { ds } from '@/design/tokens'
 
 const correlationsStore = useCorrelationsStore()
 
-const cluster = computed(() => correlationsStore.selectedCluster)
+// Use a loose typed view for the cluster since it can be CorrelationCluster or EventCorrelationCluster
+const cluster = computed(() => {
+  const c = correlationsStore.selectedCluster
+  if (!c) return null
+  return c as {
+    virtual_trace_id: string
+    rule_type: string
+    group?: string
+    entry_count: number
+    entries: Array<{ file?: string; line_number?: number; level?: string; timestamp?: string; message?: string }>
+    shared_value?: string
+    source_field?: string
+    target_field?: string
+    window?: string
+    anchor_message?: string
+    anchor_file?: string
+    anchor_line?: number
+    anchor_timestamp?: string
+  }
+})
 
 const levelColors: Record<string, string> = {
   TRACE: '#808080',
@@ -53,7 +72,13 @@ function formatTime(timestamp: string | null | undefined): string {
 
 const ruleTypeLabel = computed(() => {
   if (!cluster.value) return ''
-  return cluster.value.rule_type === 'field_match' ? 'Field Match' : 'Temporal'
+  const labels: Record<string, string> = {
+    field_match: 'Field Match',
+    temporal: 'Temporal',
+    event_window: 'Event Window',
+    event_trigger: 'Event Trigger',
+  }
+  return labels[cluster.value.rule_type] || cluster.value.rule_type
 })
 </script>
 
@@ -95,7 +120,8 @@ const ruleTypeLabel = computed(() => {
               </NStatistic>
             </NGi>
             <NGi>
-              <NStatistic label="Group" :value="cluster.group" />
+              <NStatistic v-if="cluster.group" label="Group" :value="cluster.group" />
+              <NStatistic v-else label="Window" :value="cluster.window || '—'" />
             </NGi>
             <NGi>
               <NStatistic label="Entries" :value="cluster.entry_count" />
@@ -112,7 +138,7 @@ const ruleTypeLabel = computed(() => {
             </NText>
           </NSpace>
 
-          <NSpace v-if="cluster.rule_type === 'temporal'" :size="8" style="margin-top: 12px;">
+          <NSpace v-if="cluster.rule_type === 'temporal' || cluster.rule_type === 'event_window' || cluster.rule_type === 'event_trigger'" :size="8" style="margin-top: 12px;">
             <NText depth="3" style="font-size: 12px;">Window:</NText>
             <NTag size="small" :bordered="false" type="info">
               {{ cluster.window }}
@@ -120,6 +146,9 @@ const ruleTypeLabel = computed(() => {
             <NText v-if="cluster.anchor_message" depth="3" style="font-size: 12px;">
               Anchor: {{ cluster.anchor_message }}
             </NText>
+            <NTag v-if="cluster.anchor_file" size="small" :bordered="false" :style="{ background: '#8b5cf620', color: '#8b5cf6' }">
+              {{ cluster.anchor_file }}
+            </NTag>
           </NSpace>
         </div>
 

@@ -62,6 +62,14 @@ try:
 except ImportError:
     HAS_CORRELATOR = False
 
+# Cross-file event correlation (M3.5)
+try:
+    from logler.event_correlator import correlate_events as event_correlate
+
+    HAS_EVENT_CORRELATOR = True
+except ImportError:
+    HAS_EVENT_CORRELATOR = False
+
 # Configuration
 LOG_ROOT = Path(os.environ.get("LOGLER_ROOT", ".")).expanduser().resolve()
 DIST_DIR = Path(__file__).parent.parent / "dist"
@@ -228,6 +236,16 @@ def create_app() -> FastAPI:
     class CorrelationRunRequest(BaseModel):
         paths: List[str]
         rule: Optional[str] = None
+
+    class EventCorrelateRequest(BaseModel):
+        paths: List[str]
+        anchor_timestamp: Optional[str] = None
+        anchor_file: Optional[str] = None
+        anchor_line: Optional[int] = None
+        trigger_level: Optional[str] = None
+        trigger_pattern: Optional[str] = None
+        window: str = "5s"
+        limit: Optional[int] = None
 
     # Helper functions
     def _parse_timestamp(ts: Any) -> Optional[datetime]:
@@ -930,6 +948,73 @@ def create_app() -> FastAPI:
         corr_result["entries_loaded"] = len(all_entries)
 
         return corr_result
+
+    # ---- Event Correlation API (M3.5) ----
+
+    @app.post("/api/events/correlate")
+    async def correlate_events_endpoint(request: EventCorrelateRequest):
+        """Ad-hoc cross-file event correlation around a timestamp or trigger."""
+        if not HAS_EVENT_CORRELATOR:
+            return {"error": "Event correlator not available. Upgrade logler."}
+
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+
+        # Build kwargs for correlate_events()
+        kwargs: Dict[str, Any] = {
+            "files": validated_paths,
+            "window": request.window,
+        }
+
+        if request.limit:
+            kwargs["limit"] = request.limit
+
+        # Anchor entry mode: file + line
+        if request.anchor_file and request.anchor_line:
+            anchor_file = str(_ensure_within_root(Path(request.anchor_file)))
+            # Read the specific line to build anchor_entry
+            try:
+                with open(anchor_file, "r", encoding="utf-8", errors="replace") as f:
+                    lines = f.readlines()
+                if request.anchor_line <= len(lines):
+                    raw_line = lines[request.anchor_line - 1].rstrip("\n\r")
+                    entry = parser.parse_line(request.anchor_line, raw_line)
+                    kwargs["anchor_entry"] = _entry_to_dict(entry, anchor_file)
+            except Exception:
+                pass
+
+        # Anchor timestamp mode
+        if "anchor_entry" not in kwargs and request.anchor_timestamp:
+            kwargs["anchor_timestamp"] = request.anchor_timestamp
+
+        # Trigger mode
+        if "anchor_entry" not in kwargs and "anchor_timestamp" not in kwargs:
+            trigger: Dict[str, str] = {}
+            if request.trigger_level:
+                trigger["level"] = request.trigger_level
+            if request.trigger_pattern:
+                trigger["pattern"] = request.trigger_pattern
+            if trigger:
+                kwargs["trigger"] = trigger
+
+        try:
+            result = event_correlate(**kwargs)
+        except Exception as e:
+            return {"error": f"Correlation failed: {e}"}
+
+        # Slim cluster entries to references
+        for cluster in result.get("clusters", []):
+            slim_entries = []
+            for entry in cluster.get("entries", []):
+                slim_entries.append({
+                    "file": Path(entry.get("file", "")).name if entry.get("file") else "",
+                    "line_number": entry.get("line_number"),
+                    "level": entry.get("level", ""),
+                    "timestamp": entry.get("timestamp", ""),
+                    "message": (entry.get("message") or entry.get("raw") or "")[:200],
+                })
+            cluster["entries"] = slim_entries
+
+        return result
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):

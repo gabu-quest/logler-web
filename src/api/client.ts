@@ -36,6 +36,8 @@ import type {
   CorrelationConfigResponse,
   CorrelationRunRequest,
   CorrelationRunResponse,
+  EventCorrelateRequest,
+  EventCorrelateResponse,
 } from './types'
 
 const API_BASE = '/api'
@@ -196,6 +198,14 @@ export const api = {
 
   async runCorrelations(request: CorrelationRunRequest): Promise<CorrelationRunResponse> {
     return fetchJson(`${API_BASE}/correlations/run`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Event Correlation API (M3.5)
+  async correlateEvents(request: EventCorrelateRequest): Promise<EventCorrelateResponse> {
+    return fetchJson(`${API_BASE}/events/correlate`, {
       method: 'POST',
       body: JSON.stringify(request),
     })

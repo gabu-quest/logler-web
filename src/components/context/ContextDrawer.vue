@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { NDrawer, NDrawerContent, NSpin, NAlert, NText, NTag, NSpace, NButton } from 'naive-ui'
-import { PhX, PhMagnifyingGlassPlus } from '@phosphor-icons/vue'
+import { PhX, PhMagnifyingGlassPlus, PhLink } from '@phosphor-icons/vue'
 import { useInvestigationStore } from '@/stores/investigation'
 import { useFilesStore } from '@/stores/files'
+import { useCorrelationsStore } from '@/stores/correlations'
 import type { ContextEntry, LogEntry } from '@/api/types'
 import { ds } from '@/design/tokens'
 
 const investigationStore = useInvestigationStore()
 const filesStore = useFilesStore()
+const correlationsStore = useCorrelationsStore()
 
 const levelColors: Record<string, string> = {
   TRACE: '#808080',
@@ -54,6 +56,12 @@ function handleEntryClick(entry: ContextEntry) {
 function handleFollowThread(identifier: string, type: string) {
   investigationStore.loadThreadTimeline(filesStore.activeFiles, identifier, type)
 }
+
+function handleCorrelateAround() {
+  const entry = investigationStore.selectedEntry
+  if (!entry) return
+  correlationsStore.correlateAroundEntry(filesStore.activeFiles, entry)
+}
 </script>
 
 <template>
@@ -80,6 +88,20 @@ function handleFollowThread(identifier: string, type: string) {
           </NButton>
         </NSpace>
       </template>
+
+      <!-- Correlate action bar -->
+      <div v-if="investigationStore.selectedEntry && filesStore.isInterleaved" class="correlate-bar">
+        <NButton
+          size="small"
+          :loading="correlationsStore.eventLoading"
+          @click="handleCorrelateAround"
+        >
+          <template #icon>
+            <PhLink :size="14" />
+          </template>
+          Correlate Around This
+        </NButton>
+      </div>
 
       <NSpin :show="investigationStore.contextLoading">
         <NAlert
@@ -147,6 +169,12 @@ function handleFollowThread(identifier: string, type: string) {
 </template>
 
 <style scoped>
+.correlate-bar {
+  padding: 8px 0 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 8px;
+}
+
 .context-entries {
   display: flex;
   flex-direction: column;

@@ -388,3 +388,40 @@ export interface CorrelationRunResponse {
   entries_loaded: number
   error?: string
 }
+
+// Event Correlation API (M3.5)
+export interface EventCorrelateRequest {
+  paths: string[]
+  anchor_timestamp?: string
+  anchor_file?: string
+  anchor_line?: number
+  trigger_level?: string
+  trigger_pattern?: string
+  window?: string
+  limit?: number
+}
+
+export interface EventCorrelationCluster {
+  virtual_trace_id: string
+  rule_type: 'event_window' | 'event_trigger'
+  anchor_timestamp?: string
+  anchor_message?: string
+  anchor_file?: string
+  anchor_line?: number
+  window: string
+  entry_count: number
+  entries: CorrelationEntryRef[]
+  trigger?: Record<string, string>
+}
+
+export interface EventCorrelateResponse {
+  clusters: EventCorrelationCluster[]
+  total_clusters: number
+  total_entries_correlated: number
+  files_searched: number
+  window: string
+  error?: string
+}
+
+// Union type for any cluster shown in the panel
+export type AnyCorrelationCluster = CorrelationCluster | EventCorrelationCluster
