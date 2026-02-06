@@ -32,6 +32,20 @@ describe('files store', () => {
       store.setActiveFiles(['/path/to/file1.log', '/path/to/file2.log'])
       expect(store.isInterleaved).toBe(true)
     })
+
+    it('isInterleaved returns false for empty files', () => {
+      const store = useFilesStore()
+      expect(store.isInterleaved).toBe(false)
+    })
+
+    it('hasActiveFiles returns false after clearing', () => {
+      const store = useFilesStore()
+      store.setActiveFiles(['/logs/app.log'])
+      expect(store.hasActiveFiles).toBe(true)
+
+      store.clearActiveFiles()
+      expect(store.hasActiveFiles).toBe(false)
+    })
   })
 
   describe('setActiveFiles', () => {
@@ -42,6 +56,16 @@ describe('files store', () => {
       store.setActiveFiles(paths)
 
       expect(store.activeFiles).toEqual(paths)
+      expect(store.activeFiles[0]).toBe('/logs/app.log')
+      expect(store.activeFiles[1]).toBe('/logs/error.log')
+    })
+
+    it('handles empty array', () => {
+      const store = useFilesStore()
+      store.setActiveFiles(['/logs/app.log'])
+      store.setActiveFiles([])
+      expect(store.activeFiles).toHaveLength(0)
+      expect(store.hasActiveFiles).toBe(false)
     })
 
     it('sets file metadata when provided', () => {

@@ -67,6 +67,8 @@ describe('logs store', () => {
       store.setSearchQuery('ERROR')
 
       expect(store.filteredEntries).toHaveLength(2)
+      expect(store.filteredEntries[0].message).toBe('ERROR occurred')
+      expect(store.filteredEntries[1].message).toBe('error handled')
     })
 
     it('filters by log levels', () => {
@@ -113,6 +115,8 @@ describe('logs store', () => {
       store.setCorrelationFilter('user')
 
       expect(store.filteredEntries).toHaveLength(2)
+      expect(store.filteredEntries[0].correlation_id).toBe('user-request-001')
+      expect(store.filteredEntries[1].correlation_id).toBe('user-request-002')
     })
 
     it('filters by thread ID', () => {
@@ -150,6 +154,44 @@ describe('logs store', () => {
 
       expect(store.filteredEntries).toHaveLength(1)
       expect(store.filteredEntries[0].message).toBe('Main error')
+    })
+
+    it('filters by trace ID', () => {
+      const store = useLogsStore()
+      store.entries = [
+        createLogEntry({ trace_id: 'trace-abc-001', message: 'Traced entry 1' }),
+        createLogEntry({ trace_id: 'trace-abc-002', message: 'Traced entry 2' }),
+        createLogEntry({ trace_id: 'trace-xyz-001', message: 'Different trace' }),
+        createLogEntry({ message: 'No trace' }),
+      ]
+
+      store.setTraceFilter('trace-abc')
+
+      expect(store.filteredEntries).toHaveLength(2)
+      expect(store.filteredEntries[0].trace_id).toBe('trace-abc-001')
+      expect(store.filteredEntries[1].trace_id).toBe('trace-abc-002')
+    })
+
+    it('filters out entries from hidden files', async () => {
+      const store = useLogsStore()
+      const { useFileColorsStore } = await import('../fileColors')
+      const fileColorsStore = useFileColorsStore()
+
+      store.entries = [
+        createLogEntry({ file: '/logs/app.log', message: 'App log' }),
+        createLogEntry({ file: '/logs/error.log', message: 'Error log' }),
+        createLogEntry({ file: '/logs/app.log', message: 'App log 2' }),
+      ]
+
+      // Assign colors so files are tracked
+      fileColorsStore.getFileColor('/logs/app.log')
+      fileColorsStore.getFileColor('/logs/error.log')
+
+      // Hide app.log
+      fileColorsStore.toggleFileVisibility('/logs/app.log')
+
+      expect(store.filteredEntries).toHaveLength(1)
+      expect(store.filteredEntries[0].message).toBe('Error log')
     })
 
     it('handles empty entries array', () => {
@@ -293,6 +335,7 @@ describe('logs store', () => {
       store.toggleLevel('DEBUG')
       store.setCorrelationFilter('corr-123')
       store.setThreadFilter('main')
+      store.setTraceFilter('trace-001')
 
       store.clearFilters()
 
@@ -300,6 +343,41 @@ describe('logs store', () => {
       expect(store.selectedLevels).toHaveLength(8) // All levels
       expect(store.correlationFilter).toBe('')
       expect(store.threadFilter).toBe('')
+      expect(store.traceFilter).toBe('')
+    })
+
+    it('setFilter clears other filters and sets the specified one', () => {
+      const store = useLogsStore()
+      store.setSearchQuery('test')
+      store.setCorrelationFilter('corr-123')
+      store.setThreadFilter('main')
+
+      store.setFilter('trace_id', 'trace-abc')
+
+      expect(store.traceFilter).toBe('trace-abc')
+      expect(store.threadFilter).toBe('')
+      expect(store.correlationFilter).toBe('')
+      expect(store.searchQuery).toBe('')
+    })
+
+    it('setFilter works for thread_id type', () => {
+      const store = useLogsStore()
+
+      store.setFilter('thread_id', 'worker-1')
+
+      expect(store.threadFilter).toBe('worker-1')
+      expect(store.correlationFilter).toBe('')
+      expect(store.traceFilter).toBe('')
+    })
+
+    it('setFilter works for correlation_id type', () => {
+      const store = useLogsStore()
+
+      store.setFilter('correlation_id', 'req-123')
+
+      expect(store.correlationFilter).toBe('req-123')
+      expect(store.threadFilter).toBe('')
+      expect(store.traceFilter).toBe('')
     })
   })
 })

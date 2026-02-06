@@ -1,3 +1,5 @@
 export * from './log-entry'
 export * from './hierarchy-node'
 export * from './thread-info'
+export * from './metrics'
+export * from './correlation'
