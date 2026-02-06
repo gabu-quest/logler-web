@@ -53,6 +53,15 @@ try:
 except ImportError:
     HAS_FORMAT_CONFIG = False
 
+# Correlation config and engine (M2.5)
+try:
+    from logler.config import find_correlations_config, load_correlations_config
+    from logler.correlator import correlate_by_rules
+
+    HAS_CORRELATOR = True
+except ImportError:
+    HAS_CORRELATOR = False
+
 # Configuration
 LOG_ROOT = Path(os.environ.get("LOGLER_ROOT", ".")).expanduser().resolve()
 DIST_DIR = Path(__file__).parent.parent / "dist"
@@ -215,6 +224,10 @@ def create_app() -> FastAPI:
     class FormatSaveRequest(BaseModel):
         formats: Dict[str, Any]
         directory: Optional[str] = None
+
+    class CorrelationRunRequest(BaseModel):
+        paths: List[str]
+        rule: Optional[str] = None
 
     # Helper functions
     def _parse_timestamp(ts: Any) -> Optional[datetime]:
@@ -804,6 +817,119 @@ def create_app() -> FastAPI:
             "config_path": str(config_file),
             "format_count": len(request.formats),
         }
+
+    # ---- Correlation API (M2.5) ----
+
+    @app.get("/api/correlations/config")
+    async def get_correlations_config_endpoint(directory: Optional[str] = None):
+        """Get the active .logler/correlations.yaml config."""
+        if not HAS_CORRELATOR:
+            return {"available": False, "groups": {}, "error": "Correlation engine not available."}
+
+        search_dir = LOG_ROOT
+        if directory:
+            try:
+                search_dir = _ensure_within_root(Path(directory))
+            except HTTPException:
+                search_dir = LOG_ROOT
+
+        config_path = find_correlations_config(search_dir)
+        if not config_path:
+            return {"available": True, "config_path": None, "groups": {}}
+
+        try:
+            config = load_correlations_config(config_path)
+            groups: Dict[str, Any] = {}
+            for name, group in config.correlations.items():
+                rules = []
+                for rule in group.rules:
+                    rule_summary: Dict[str, Any] = {"type": rule.type}
+                    if rule.type == "field_match":
+                        rule_summary["source_field"] = rule.source.field
+                        rule_summary["target_field"] = rule.target.field
+                        rule_summary["source_pattern"] = rule.source.file_pattern
+                        rule_summary["target_pattern"] = rule.target.file_pattern
+                    elif rule.type == "temporal":
+                        rule_summary["window"] = rule.window
+                        rule_summary["anchor"] = {
+                            "file_pattern": rule.anchor.file_pattern,
+                            "field": rule.anchor.field,
+                            "condition": rule.anchor.condition,
+                            "level": rule.anchor.level,
+                            "pattern": rule.anchor.pattern,
+                        }
+                    rules.append(rule_summary)
+                groups[name] = {
+                    "description": group.description or "",
+                    "rule_count": len(group.rules),
+                    "rules": rules,
+                }
+            return {
+                "available": True,
+                "config_path": str(config_path),
+                "groups": groups,
+            }
+        except Exception as e:
+            return {"available": True, "config_path": str(config_path), "groups": {}, "error": str(e)}
+
+    @app.post("/api/correlations/run")
+    async def run_correlations(request: CorrelationRunRequest):
+        """Run correlation rules against log files."""
+        if not HAS_CORRELATOR:
+            return {"error": "Correlation engine not available. Upgrade logler."}
+
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+
+        # Find correlation config starting from first file's directory
+        search_dir = Path(validated_paths[0]).parent if validated_paths else LOG_ROOT
+        config_path = find_correlations_config(search_dir)
+        if not config_path:
+            return {"error": "No .logler/correlations.yaml found"}
+
+        try:
+            config = load_correlations_config(config_path)
+        except Exception as e:
+            return {"error": f"Failed to load correlations config: {e}"}
+
+        if not config.correlations:
+            return {"error": "No correlation rules defined in config"}
+
+        # Load entries from all files using logler's search engine
+        all_entries: List[Dict[str, Any]] = []
+        for file_path in validated_paths:
+            try:
+                result = logler_search(files=[file_path])
+                for item in result.get("results", []):
+                    entry = item.get("entry", item)
+                    all_entries.append(entry)
+            except Exception:
+                pass  # Skip files that fail to load
+
+        if not all_entries:
+            return {"error": "No entries loaded from the provided files"}
+
+        # Run correlator
+        corr_result = correlate_by_rules(
+            all_entries, config, group_name=request.rule
+        )
+
+        # Slim down cluster entries to references only (avoid sending full entries)
+        for cluster in corr_result["clusters"]:
+            slim_entries = []
+            for entry in cluster["entries"]:
+                slim_entries.append({
+                    "file": Path(entry.get("file", "")).name if entry.get("file") else "",
+                    "line_number": entry.get("line_number"),
+                    "level": entry.get("level", ""),
+                    "timestamp": entry.get("timestamp", ""),
+                    "message": (entry.get("message") or entry.get("raw") or "")[:200],
+                })
+            cluster["entries"] = slim_entries
+
+        corr_result["files_searched"] = len(validated_paths)
+        corr_result["entries_loaded"] = len(all_entries)
+
+        return corr_result
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):

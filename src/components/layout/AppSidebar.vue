@@ -14,6 +14,7 @@ import {
 import { PhMagnifyingGlass, PhWarning, PhXCircle } from '@phosphor-icons/vue'
 import { useLogsStore } from '@/stores/logs'
 import { useThreadsStore } from '@/stores/threads'
+import CorrelationControls from '@/components/correlation/CorrelationControls.vue'
 
 const logsStore = useLogsStore()
 const threadsStore = useThreadsStore()
@@ -97,6 +98,13 @@ const stats = computed(() => logsStore.stats)
           />
         </NSpace>
       </NCheckboxGroup>
+    </div>
+
+    <NDivider style="margin: 12px 0;" />
+
+    <!-- Correlation Controls (M2.5) -->
+    <div class="sidebar-section">
+      <CorrelationControls />
     </div>
 
     <NDivider style="margin: 12px 0;" />

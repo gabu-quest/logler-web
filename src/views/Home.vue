@@ -9,6 +9,7 @@ import ThreadTimelinePanel from '@/components/thread/ThreadTimelinePanel.vue'
 import IdExplorer from '@/components/ids/IdExplorer.vue'
 import CompareView from '@/components/compare/CompareView.vue'
 import CrossServiceView from '@/components/cross-service/CrossServiceView.vue'
+import CorrelationPanel from '@/components/correlation/CorrelationPanel.vue'
 import KeyboardHelpModal from '@/components/help/KeyboardHelpModal.vue'
 import { useUiStore } from '@/stores/ui'
 import { useNavigationStore } from '@/stores/navigation'
@@ -127,6 +128,9 @@ useUrlState()
 
     <!-- Cross-Service Timeline View -->
     <CrossServiceView />
+
+    <!-- Correlation Panel (M2.5) -->
+    <CorrelationPanel />
 
     <!-- Keyboard Help Modal -->
     <KeyboardHelpModal />

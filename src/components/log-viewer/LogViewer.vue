@@ -8,6 +8,7 @@ import { useLogsStore } from '@/stores/logs'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import { useInvestigationStore } from '@/stores/investigation'
+import { useCorrelationsStore } from '@/stores/correlations'
 import { useNavigationStore } from '@/stores/navigation'
 import type { LogEntry as LogEntryType } from '@/api/types'
 
@@ -15,6 +16,7 @@ const logsStore = useLogsStore()
 const uiStore = useUiStore()
 const filesStore = useFilesStore()
 const investigationStore = useInvestigationStore()
+const correlationsStore = useCorrelationsStore()
 const navigationStore = useNavigationStore()
 
 const virtualListRef = ref<InstanceType<typeof NVirtualList> | null>(null)
@@ -50,6 +52,10 @@ function isEntryFocused(index: number): boolean {
 function handleEntryClick(entry: LogEntryType) {
   investigationStore.loadContext(filesStore.activeFiles, entry)
 }
+
+function handleCorrelationClick(traceId: string) {
+  correlationsStore.selectClusterByTraceId(traceId)
+}
 </script>
 
 <template>
@@ -64,7 +70,7 @@ function handleEntryClick(entry: LogEntryType) {
       class="log-list"
     >
       <template #default="{ item, index }">
-        <LogEntry :entry="item" :is-focused="isEntryFocused(index)" @click="handleEntryClick" />
+        <LogEntry :entry="item" :is-focused="isEntryFocused(index)" @click="handleEntryClick" @correlation-click="handleCorrelationClick" />
       </template>
     </NVirtualList>
 

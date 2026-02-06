@@ -33,6 +33,9 @@ import type {
   FormatTestResponse,
   FormatSaveRequest,
   FormatSaveResponse,
+  CorrelationConfigResponse,
+  CorrelationRunRequest,
+  CorrelationRunResponse,
 } from './types'
 
 const API_BASE = '/api'
@@ -180,6 +183,19 @@ export const api = {
 
   async saveFormatConfig(request: FormatSaveRequest): Promise<FormatSaveResponse> {
     return fetchJson(`${API_BASE}/formats/save`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Correlation API (M2.5)
+  async getCorrelationsConfig(directory?: string): Promise<CorrelationConfigResponse> {
+    const params = directory ? `?directory=${encodeURIComponent(directory)}` : ''
+    return fetchJson(`${API_BASE}/correlations/config${params}`)
+  },
+
+  async runCorrelations(request: CorrelationRunRequest): Promise<CorrelationRunResponse> {
+    return fetchJson(`${API_BASE}/correlations/run`, {
       method: 'POST',
       body: JSON.stringify(request),
     })

@@ -4,6 +4,7 @@ import { NText, NTag, NSpace, NTooltip } from 'naive-ui'
 import type { LogEntry as LogEntryType } from '@/api/types'
 import { useFilesStore } from '@/stores/files'
 import { useFileColorsStore } from '@/stores/fileColors'
+import { useCorrelationsStore } from '@/stores/correlations'
 
 const props = defineProps<{
   entry: LogEntryType
@@ -12,10 +13,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   click: [entry: LogEntryType]
+  correlationClick: [traceId: string]
 }>()
 
 const filesStore = useFilesStore()
 const fileColorsStore = useFileColorsStore()
+const correlationsStore = useCorrelationsStore()
 
 function handleClick() {
   emit('click', props.entry)
@@ -65,6 +68,12 @@ const shortFilename = computed(() => {
   return parts[parts.length - 1] || props.entry.file
 })
 
+/** Virtual trace IDs assigned to this entry by the correlator */
+const virtualTraceIds = computed(() => {
+  if (!props.entry.file) return []
+  return correlationsStore.getEntryTraceIds(props.entry.file, props.entry.line_number)
+})
+
 /** Left border style: file color in multi-file mode */
 const entryStyle = computed(() => {
   if (isMultiFile.value && fileColor.value) {
@@ -72,6 +81,11 @@ const entryStyle = computed(() => {
   }
   return undefined
 })
+
+function handleCorrelationClick(event: Event, traceId: string) {
+  event.stopPropagation()
+  emit('correlationClick', traceId)
+}
 </script>
 
 <template>
@@ -128,6 +142,20 @@ const entryStyle = computed(() => {
         >
           {{ entry.service_name }}
         </NTag>
+        <NTooltip v-for="vtId in virtualTraceIds" :key="vtId" :delay="200">
+          <template #trigger>
+            <NTag
+              :bordered="false"
+              size="tiny"
+              class="vt-badge"
+              :style="{ background: '#8b5cf620', color: '#8b5cf6', cursor: 'pointer' }"
+              @click="handleCorrelationClick($event, vtId)"
+            >
+              {{ vtId.substring(0, 9) }}
+            </NTag>
+          </template>
+          Virtual Trace: {{ vtId }}
+        </NTooltip>
       </NSpace>
     </div>
     <div class="entry-message">

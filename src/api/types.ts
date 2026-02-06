@@ -318,3 +318,73 @@ export interface FormatSaveResponse {
   config_path: string
   format_count: number
 }
+
+// Correlation API (M2.5)
+export interface CorrelationRuleSummary {
+  type: 'field_match' | 'temporal'
+  source_field?: string
+  target_field?: string
+  source_pattern?: string
+  target_pattern?: string
+  window?: string
+  anchor?: {
+    file_pattern?: string
+    field?: string
+    condition?: string
+    level?: string
+    pattern?: string
+  }
+}
+
+export interface CorrelationGroupInfo {
+  description: string
+  rule_count: number
+  rules: CorrelationRuleSummary[]
+}
+
+export interface CorrelationConfigResponse {
+  available: boolean
+  config_path: string | null
+  groups: Record<string, CorrelationGroupInfo>
+  error?: string
+}
+
+export interface CorrelationRunRequest {
+  paths: string[]
+  rule?: string
+}
+
+export interface CorrelationCluster {
+  virtual_trace_id: string
+  group: string
+  rule_type: 'field_match' | 'temporal'
+  rule_index: number
+  shared_value?: string
+  source_field?: string
+  target_field?: string
+  anchor_timestamp?: string
+  anchor_message?: string
+  window?: string
+  entry_count: number
+  source_count?: number
+  target_count?: number
+  entries: CorrelationEntryRef[]
+}
+
+export interface CorrelationEntryRef {
+  file: string
+  line_number?: number
+  level?: string
+  timestamp?: string
+  message?: string
+}
+
+export interface CorrelationRunResponse {
+  clusters: CorrelationCluster[]
+  total_clusters: number
+  total_entries_correlated: number
+  groups_applied: string[]
+  files_searched: number
+  entries_loaded: number
+  error?: string
+}
