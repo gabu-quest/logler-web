@@ -56,6 +56,12 @@ The demo includes:
 - **Waterfall Timeline** - Visualize request flow and bottlenecks
 - **SQL Queries** - Query your logs with DuckDB SQL
 - **Virtual Scrolling** - Handle millions of entries without lag
+- **Metrics & Charting** - Extract numeric values, plot time-series with anomaly detection (M5)
+- **Format Auto-Detection** - Confidence scoring and Drain template mining (M6)
+- **Virtual Trace IDs** - Correlate entries by shared fields or temporal proximity (M2)
+- **Cross-File Event Correlation** - Find related events across log files (M3)
+- **File Color Coding** - Visual differentiation for multi-file views (M4)
+- **Custom Log Formats** - Define and manage parsing formats via `.logler.toml` (M1)
 
 ### For AI Agents (LLM-First Design)
 
@@ -88,6 +94,12 @@ logler llm sql "SELECT service, COUNT(*) FROM logs WHERE level='ERROR' GROUP BY 
 | `logler llm bottleneck` | Find slow spans | **Yes** |
 | `logler llm sql` | Ad-hoc queries | No |
 | `logler llm sample` | Smart log sampling | No |
+| `logler llm metrics` | Numeric extraction & stats | No |
+| `logler llm detect` | Auto-detect log format | No |
+| `logler llm templates` | Drain template mining | No |
+| `logler llm format list\|test\|save` | Manage custom formats | No |
+| `logler llm correlation list\|run` | Virtual trace correlation | Needs `.logler.toml` |
+| `logler llm correlate-events` | Cross-file event correlation | No |
 
 ## Installation
 
@@ -116,10 +128,33 @@ logler-web --demo
 ## Web UI Features
 
 - **Virtual scrolling** - Handle millions of entries
-- **Keyboard shortcuts** - `j/k` navigate, `?` help
+- **Keyboard shortcuts** - `j/k` navigate, `1-4` switch tabs, `?` help
 - **Deep linking** - Share URLs to specific lines
 - **Smart sampling** - Auto-suggest sampling for large files
 - **Live following** - Real-time log updates via WebSocket
+- **Hierarchy tab** - Interactive tree view of trace hierarchies with error analysis
+- **Waterfall tab** - Timeline visualization of span durations and overlaps
+- **Metrics tab** - ECharts time-series charts with anomaly scatter points, statistical summaries (min/max/mean/p95/p99)
+- **Format detection banner** - Shows detected format with confidence percentage, Drain template clusters
+- **Correlation sidebar** - Run virtual trace rules from `.logler.toml`, view correlated clusters in a detail drawer
+- **Event correlation view** - Cross-file temporal event correlation with window controls
+- **File color coding** - Color-coded file indicators with visibility toggles and legend
+
+## Testing
+
+```bash
+# Unit tests (Vitest)
+pnpm test:run
+
+# E2E tests (Playwright)
+pnpm test:e2e
+
+# Type check
+pnpm type-check
+
+# Build
+pnpm build
+```
 
 ## Tech Stack
 

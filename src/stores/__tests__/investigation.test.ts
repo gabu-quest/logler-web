@@ -49,9 +49,13 @@ describe('investigation store', () => {
   describe('loadContext', () => {
     it('loads context and opens drawer', async () => {
       const contextResponse = {
-        before: [{ line_number: 5, message: 'Before line' }],
-        target: { line_number: 10, message: 'Target line' },
-        after: [{ line_number: 15, message: 'After line' }],
+        entries: [
+          { line_number: 5, message: 'Before line', timestamp: null, level: 'INFO', thread_id: null, correlation_id: null, trace_id: null, span_id: null, service_name: null, raw: 'Before line', is_target: false },
+          { line_number: 10, message: 'Target line', timestamp: null, level: 'INFO', thread_id: null, correlation_id: null, trace_id: null, span_id: null, service_name: null, raw: 'Target line', is_target: true },
+          { line_number: 15, message: 'After line', timestamp: null, level: 'INFO', thread_id: null, correlation_id: null, trace_id: null, span_id: null, service_name: null, raw: 'After line', is_target: false },
+        ],
+        target_line: 10,
+        file_path: '/logs/app.log',
       }
       vi.mocked(api.getContext).mockResolvedValue(contextResponse)
 
@@ -91,7 +95,7 @@ describe('investigation store', () => {
   describe('closeContextDrawer', () => {
     it('hides drawer and clears selected entry', async () => {
       const store = useInvestigationStore()
-      vi.mocked(api.getContext).mockResolvedValue({ before: [], target: {}, after: [] })
+      vi.mocked(api.getContext).mockResolvedValue({ entries: [], target_line: 0, file_path: '/logs/app.log' })
       const entry = createLogEntry({ file: '/logs/app.log', line_number: 10 })
       await store.loadContext(['/logs/app.log'], entry)
 
@@ -107,8 +111,13 @@ describe('investigation store', () => {
       const timelineResponse = {
         identifier: 'worker-1',
         identifier_type: 'thread_id',
-        total_entries: 5,
         entries: [],
+        duration_ms: null,
+        span_count: 0,
+        service_names: [],
+        error_count: 0,
+        start_time: null,
+        end_time: null,
       }
       vi.mocked(api.followThread).mockResolvedValue(timelineResponse)
 
@@ -133,7 +142,17 @@ describe('investigation store', () => {
 
   describe('closeThreadPanel', () => {
     it('hides panel and clears timeline data', async () => {
-      vi.mocked(api.followThread).mockResolvedValue({ entries: [] })
+      vi.mocked(api.followThread).mockResolvedValue({
+        identifier: 'worker-1',
+        identifier_type: 'thread_id',
+        entries: [],
+        duration_ms: null,
+        span_count: 0,
+        service_names: [],
+        error_count: 0,
+        start_time: null,
+        end_time: null,
+      })
       const store = useInvestigationStore()
       await store.loadThreadTimeline(['/logs/app.log'], 'worker-1')
 
@@ -147,8 +166,8 @@ describe('investigation store', () => {
   describe('sample actions', () => {
     it('setSampleStrategy updates strategy', () => {
       const store = useInvestigationStore()
-      store.setSampleStrategy('errors')
-      expect(store.sampleStrategy).toBe('errors')
+      store.setSampleStrategy('errors_focused')
+      expect(store.sampleStrategy).toBe('errors_focused')
     })
 
     it('setSampleSize updates size', () => {
