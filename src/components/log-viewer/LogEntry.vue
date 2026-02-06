@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NText, NTag, NSpace } from 'naive-ui'
+import { NText, NTag, NSpace, NTooltip } from 'naive-ui'
 import type { LogEntry as LogEntryType } from '@/api/types'
+import { useFilesStore } from '@/stores/files'
+import { useFileColorsStore } from '@/stores/fileColors'
 
 const props = defineProps<{
   entry: LogEntryType
@@ -11,6 +13,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   click: [entry: LogEntryType]
 }>()
+
+const filesStore = useFilesStore()
+const fileColorsStore = useFileColorsStore()
 
 function handleClick() {
   emit('click', props.entry)
@@ -43,10 +48,39 @@ const formattedTime = computed(() => {
     return props.entry.timestamp
   }
 })
+
+/** Whether we are in multi-file (interleaved) mode and this entry has a file field */
+const isMultiFile = computed(() => filesStore.isInterleaved && !!props.entry.file)
+
+/** Color assigned to this entry's source file */
+const fileColor = computed(() => {
+  if (!props.entry.file) return undefined
+  return fileColorsStore.getFileColor(props.entry.file)
+})
+
+/** Short filename (last path segment) for the badge */
+const shortFilename = computed(() => {
+  if (!props.entry.file) return ''
+  const parts = props.entry.file.replace(/\\/g, '/').split('/')
+  return parts[parts.length - 1] || props.entry.file
+})
+
+/** Left border style: file color in multi-file mode */
+const entryStyle = computed(() => {
+  if (isMultiFile.value && fileColor.value) {
+    return { borderLeft: `3px solid ${fileColor.value}`, paddingLeft: '9px' }
+  }
+  return undefined
+})
 </script>
 
 <template>
-  <div class="log-entry" :class="{ 'is-focused': isFocused }" @click="handleClick">
+  <div
+    class="log-entry"
+    :class="{ 'is-focused': isFocused && !isMultiFile, 'is-focused-multi': isFocused && isMultiFile }"
+    :style="isMultiFile ? entryStyle : undefined"
+    @click="handleClick"
+  >
     <div class="entry-header">
       <NSpace :size="8" align="center">
         <NText class="line-number" depth="3">{{ entry.line_number }}</NText>
@@ -58,6 +92,18 @@ const formattedTime = computed(() => {
         >
           {{ entry.level }}
         </NTag>
+        <NTooltip v-if="isMultiFile" :delay="300">
+          <template #trigger>
+            <NTag
+              :bordered="false"
+              size="tiny"
+              :style="{ background: fileColor + '20', color: fileColor }"
+            >
+              {{ shortFilename }}
+            </NTag>
+          </template>
+          {{ entry.file }}
+        </NTooltip>
         <NTag
           v-if="entry.thread_id"
           :bordered="false"
@@ -106,6 +152,10 @@ const formattedTime = computed(() => {
   background: rgba(0, 229, 255, 0.06);
   border-left: 3px solid #00e5ff;
   padding-left: 9px;
+}
+
+.log-entry.is-focused-multi {
+  background: rgba(0, 229, 255, 0.06);
 }
 
 .entry-header {
