@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { NButton, NSpace, NTag, NText, NBadge, NTooltip, NDivider } from 'naive-ui'
-import { PhFolderOpen, PhPlugsConnected, PhPlugs, PhFingerprint, PhNetwork } from '@phosphor-icons/vue'
+import { PhFolderOpen, PhPlugsConnected, PhPlugs, PhFingerprint, PhNetwork, PhGear } from '@phosphor-icons/vue'
 import SampleControls from '@/components/sample/SampleControls.vue'
+import FormatSettings from '@/components/formats/FormatSettings.vue'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import { useLogsStore } from '@/stores/logs'
@@ -75,6 +76,22 @@ function openCrossServiceTimeline() {
           View cross-service timeline
         </NTooltip>
 
+        <NTooltip trigger="hover">
+          <template #trigger>
+            <NButton
+              size="small"
+              quaternary
+              @click="uiStore.openFormatSettings"
+            >
+              <template #icon>
+                <PhGear :size="18" />
+              </template>
+              Formats
+            </NButton>
+          </template>
+          Configure log format patterns
+        </NTooltip>
+
         <template v-if="filesStore.hasActiveFiles">
           <NDivider vertical />
           <SampleControls />
@@ -109,6 +126,8 @@ function openCrossServiceTimeline() {
         </NBadge>
       </NSpace>
     </div>
+
+    <FormatSettings v-model:show="uiStore.showFormatSettings" />
   </div>
 </template>
 

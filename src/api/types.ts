@@ -269,3 +269,52 @@ export interface SmartSampleResponse {
   original_count: number
   sample_count: number
 }
+
+// Format Config API (M1.4)
+export interface FormatDefinition {
+  regex: string
+  timestamp_format: string | null
+  file_patterns: string[]
+}
+
+export interface FormatConfigResponse {
+  available: boolean
+  config_path: string | null
+  formats: Record<string, FormatDefinition>
+  error?: string
+}
+
+export interface BuiltinFormatsResponse {
+  available: boolean
+  formats: Record<string, FormatDefinition>
+}
+
+export interface FormatTestRequest {
+  regex: string
+  sample_lines: string[]
+}
+
+export interface FormatTestResult {
+  line: string
+  matched: boolean
+  groups: Record<string, string>
+}
+
+export interface FormatTestResponse {
+  results: FormatTestResult[]
+  named_groups: string[]
+  match_count: number
+  total_lines: number
+  error?: string
+}
+
+export interface FormatSaveRequest {
+  formats: Record<string, FormatDefinition>
+  directory?: string
+}
+
+export interface FormatSaveResponse {
+  saved: boolean
+  config_path: string
+  format_count: number
+}

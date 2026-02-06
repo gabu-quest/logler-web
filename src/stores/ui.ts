@@ -10,6 +10,7 @@ export const useUiStore = defineStore('ui', () => {
   const showFileBrowser = ref(false)
   const showInterleaveDetails = ref(false)
   const showHelpModal = ref(false)
+  const showFormatSettings = ref(false)
 
   // Banner states
   const samplingBannerDismissed = ref(false)
@@ -60,12 +61,21 @@ export const useUiStore = defineStore('ui', () => {
     samplingBannerDismissed.value = true
   }
 
+  function openFormatSettings() {
+    showFormatSettings.value = true
+  }
+
+  function closeFormatSettings() {
+    showFormatSettings.value = false
+  }
+
   function closeAllPanels() {
     const investigationStore = useInvestigationStore()
 
     showFileBrowser.value = false
     showInterleaveDetails.value = false
     showHelpModal.value = false
+    showFormatSettings.value = false
     investigationStore.closeContextDrawer()
     investigationStore.closeThreadPanel()
     investigationStore.closeIdExplorer()
@@ -90,6 +100,7 @@ export const useUiStore = defineStore('ui', () => {
     showFileBrowser,
     showInterleaveDetails,
     showHelpModal,
+    showFormatSettings,
     samplingBannerDismissed,
     viewMode,
     autoScroll,
@@ -103,6 +114,8 @@ export const useUiStore = defineStore('ui', () => {
     closeHelpModal,
     toggleHelpModal,
     dismissSamplingBanner,
+    openFormatSettings,
+    closeFormatSettings,
     closeAllPanels,
     setViewMode,
     toggleAutoScroll,

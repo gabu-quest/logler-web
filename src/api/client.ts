@@ -27,6 +27,12 @@ import type {
   CrossServiceTimeline,
   SmartSampleRequest,
   SmartSampleResponse,
+  FormatConfigResponse,
+  BuiltinFormatsResponse,
+  FormatTestRequest,
+  FormatTestResponse,
+  FormatSaveRequest,
+  FormatSaveResponse,
 } from './types'
 
 const API_BASE = '/api'
@@ -150,6 +156,30 @@ export const api = {
   // Smart sampling
   async smartSample(request: SmartSampleRequest): Promise<SmartSampleResponse> {
     return fetchJson(`${API_BASE}/sample`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Format config (M1.4)
+  async getFormatConfig(directory?: string): Promise<FormatConfigResponse> {
+    const params = directory ? `?directory=${encodeURIComponent(directory)}` : ''
+    return fetchJson(`${API_BASE}/formats/config${params}`)
+  },
+
+  async getBuiltinFormats(): Promise<BuiltinFormatsResponse> {
+    return fetchJson(`${API_BASE}/formats/builtin`)
+  },
+
+  async testFormatRegex(request: FormatTestRequest): Promise<FormatTestResponse> {
+    return fetchJson(`${API_BASE}/formats/test`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  async saveFormatConfig(request: FormatSaveRequest): Promise<FormatSaveResponse> {
+    return fetchJson(`${API_BASE}/formats/save`, {
       method: 'POST',
       body: JSON.stringify(request),
     })

@@ -43,6 +43,16 @@ except ImportError:
     SqlEngine = None
     HAS_SQL_ENGINE = False
 
+# Config and builtin formats (M1.4)
+try:
+    from logler.config import find_config, load_config, FormatConfig, LoglerConfig
+    from logler.builtin_formats import get_builtin_formats, list_builtin_format_names
+    from logler.safe_regex import safe_compile
+
+    HAS_FORMAT_CONFIG = True
+except ImportError:
+    HAS_FORMAT_CONFIG = False
+
 # Configuration
 LOG_ROOT = Path(os.environ.get("LOGLER_ROOT", ".")).expanduser().resolve()
 DIST_DIR = Path(__file__).parent.parent / "dist"
@@ -197,6 +207,14 @@ def create_app() -> FastAPI:
         paths: List[str]
         strategy: str = "diverse"  # "errors_focused", "diverse", "representative", "chronological"
         sample_size: int = 100
+
+    class FormatTestRequest(BaseModel):
+        regex: str
+        sample_lines: List[str]
+
+    class FormatSaveRequest(BaseModel):
+        formats: Dict[str, Any]
+        directory: Optional[str] = None
 
     # Helper functions
     def _parse_timestamp(ts: Any) -> Optional[datetime]:
@@ -645,6 +663,147 @@ def create_app() -> FastAPI:
             strategy=request.strategy,
             sample_size=request.sample_size,
         )
+
+    # ---- Format Config API (M1.4) ----
+
+    @app.get("/api/formats/config")
+    async def get_format_config(directory: Optional[str] = None):
+        """Get the active .logler/formats.yaml config."""
+        if not HAS_FORMAT_CONFIG:
+            return {"available": False, "error": "Format config not available. Upgrade logler."}
+
+        search_dir = LOG_ROOT
+        if directory:
+            try:
+                search_dir = _ensure_within_root(Path(directory))
+            except HTTPException:
+                search_dir = LOG_ROOT
+
+        config_path = find_config(search_dir)
+        if not config_path:
+            return {
+                "available": True,
+                "config_path": None,
+                "formats": {},
+            }
+
+        try:
+            config = load_config(config_path)
+            formats = {}
+            for name, fmt in config.formats.items():
+                formats[name] = {
+                    "regex": fmt.regex,
+                    "timestamp_format": fmt.timestamp_format,
+                    "file_patterns": fmt.file_patterns,
+                }
+            return {
+                "available": True,
+                "config_path": str(config_path),
+                "formats": formats,
+            }
+        except Exception as e:
+            return {
+                "available": True,
+                "config_path": str(config_path),
+                "formats": {},
+                "error": str(e),
+            }
+
+    @app.get("/api/formats/builtin")
+    async def get_builtin_formats_endpoint():
+        """List all built-in format definitions."""
+        if not HAS_FORMAT_CONFIG:
+            return {"available": False, "formats": {}}
+
+        builtin = get_builtin_formats()
+        formats = {}
+        for name, fmt in builtin.items():
+            formats[name] = {
+                "regex": fmt.regex,
+                "timestamp_format": fmt.timestamp_format,
+                "file_patterns": fmt.file_patterns,
+            }
+        return {"available": True, "formats": formats}
+
+    @app.post("/api/formats/test")
+    async def test_format_regex(request: FormatTestRequest):
+        """Test a regex pattern against sample log lines."""
+        if not HAS_FORMAT_CONFIG:
+            return {"error": "Format config not available. Upgrade logler."}
+
+        import re as _re
+
+        try:
+            compiled = safe_compile(request.regex)
+        except Exception as e:
+            return {"error": f"Invalid regex: {e}", "results": []}
+
+        if not compiled.groupindex:
+            return {
+                "error": "Regex must have at least one named group (?P<name>...)",
+                "results": [],
+            }
+
+        results = []
+        for line in request.sample_lines[:50]:  # Cap at 50 lines
+            match = compiled.match(line)
+            if match:
+                results.append({
+                    "line": line,
+                    "matched": True,
+                    "groups": match.groupdict(),
+                })
+            else:
+                results.append({
+                    "line": line,
+                    "matched": False,
+                    "groups": {},
+                })
+
+        named_groups = list(compiled.groupindex.keys())
+        return {
+            "results": results,
+            "named_groups": named_groups,
+            "match_count": sum(1 for r in results if r["matched"]),
+            "total_lines": len(results),
+        }
+
+    @app.post("/api/formats/save")
+    async def save_format_config(request: FormatSaveRequest):
+        """Save format definitions to .logler/formats.yaml."""
+        if not HAS_FORMAT_CONFIG:
+            raise HTTPException(status_code=501, detail="Format config not available.")
+
+        import yaml as _yaml
+
+        target_dir = LOG_ROOT
+        if request.directory:
+            try:
+                target_dir = _ensure_within_root(Path(request.directory))
+            except HTTPException:
+                target_dir = LOG_ROOT
+
+        # Validate all formats before saving
+        try:
+            LoglerConfig.model_validate({"formats": request.formats})
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Invalid format config: {e}")
+
+        config_dir = target_dir / ".logler"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        config_file = config_dir / "formats.yaml"
+
+        data = {"formats": request.formats}
+        config_file.write_text(
+            _yaml.dump(data, default_flow_style=False, sort_keys=False),
+            encoding="utf-8",
+        )
+
+        return {
+            "saved": True,
+            "config_path": str(config_file),
+            "format_count": len(request.formats),
+        }
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
