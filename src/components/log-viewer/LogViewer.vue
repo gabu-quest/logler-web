@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { NVirtualList, NText } from 'naive-ui'
 import LogEntry from './LogEntry.vue'
 import LargeFileBanner from './LargeFileBanner.vue'
+import FileColorLegend from './FileColorLegend.vue'
 import { useLogsStore } from '@/stores/logs'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
@@ -53,6 +54,7 @@ function handleEntryClick(entry: LogEntryType) {
 
 <template>
   <div class="log-viewer">
+    <FileColorLegend />
     <LargeFileBanner />
     <NVirtualList
       ref="virtualListRef"

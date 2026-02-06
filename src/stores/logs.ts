@@ -5,6 +5,7 @@ import type { LogEntry, FilterOptions } from '@/api/types'
 import { useFilesStore } from './files'
 import { useUiStore } from './ui'
 import { useInvestigationStore } from './investigation'
+import { useFileColorsStore } from './fileColors'
 
 const LOG_LEVELS = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR', 'CRITICAL', 'FATAL']
 
@@ -63,6 +64,12 @@ export const useLogsStore = defineStore('logs', () => {
       result = result.filter(
         (e) => e.trace_id?.includes(traceFilter.value)
       )
+    }
+
+    // Filter by hidden files (multi-file visibility toggle)
+    const fileColorsStore = useFileColorsStore()
+    if (fileColorsStore.hiddenFiles.size > 0) {
+      result = result.filter(e => !e.file || !fileColorsStore.hiddenFiles.has(e.file))
     }
 
     return result
