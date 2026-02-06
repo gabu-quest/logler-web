@@ -425,3 +425,75 @@ export interface EventCorrelateResponse {
 
 // Union type for any cluster shown in the panel
 export type AnyCorrelationCluster = CorrelationCluster | EventCorrelationCluster
+
+// Metrics API (M5.4)
+export interface MetricsExtractRequest {
+  paths: string[]
+  fields?: string[]
+  bucket_size?: string
+  anomaly_threshold?: number
+}
+
+export interface MetricsAnomaly {
+  timestamp: string | null
+  value: number
+  z_score: number
+  file: string
+  line_number: number
+}
+
+export interface MetricsBucket {
+  start: string
+  end: string
+  min: number
+  max: number
+  avg: number
+  count: number
+}
+
+export interface MetricsFieldStats {
+  min: number
+  max: number
+  mean: number
+  median: number
+  stddev: number
+  p95: number
+  p99: number
+}
+
+export interface MetricsFieldData {
+  count: number
+  stats: MetricsFieldStats
+  first_timestamp: string | null
+  last_timestamp: string | null
+  anomalies: MetricsAnomaly[]
+  buckets?: MetricsBucket[]
+  unit?: string
+}
+
+export interface MetricsExtractResponse {
+  fields: Record<string, MetricsFieldData>
+  entries_scanned: number
+  files_searched: number
+}
+
+// Format Detection API (M6.5)
+export interface FormatDetectRequest {
+  paths: string[]
+  sample_size?: number
+}
+
+export interface FormatDetectionResult {
+  format: string
+  confidence: number
+  sample_size: number
+  match_rate: number
+  alternatives: Array<{ format: string; confidence: number; match_rate: number }>
+  detected_fields: string[]
+  sample_lines: string[]
+  mixed: boolean
+}
+
+export interface FormatDetectResponse {
+  files: Record<string, FormatDetectionResult>
+}

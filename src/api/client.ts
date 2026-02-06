@@ -38,6 +38,10 @@ import type {
   CorrelationRunResponse,
   EventCorrelateRequest,
   EventCorrelateResponse,
+  MetricsExtractRequest,
+  MetricsExtractResponse,
+  FormatDetectRequest,
+  FormatDetectResponse,
 } from './types'
 
 const API_BASE = '/api'
@@ -206,6 +210,22 @@ export const api = {
   // Event Correlation API (M3.5)
   async correlateEvents(request: EventCorrelateRequest): Promise<EventCorrelateResponse> {
     return fetchJson(`${API_BASE}/events/correlate`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Metrics API (M5.4)
+  async extractMetrics(request: MetricsExtractRequest): Promise<MetricsExtractResponse> {
+    return fetchJson(`${API_BASE}/metrics/extract`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
+  },
+
+  // Format Detection API (M6.5)
+  async detectFormats(request: FormatDetectRequest): Promise<FormatDetectResponse> {
+    return fetchJson(`${API_BASE}/formats/detect`, {
       method: 'POST',
       body: JSON.stringify(request),
     })

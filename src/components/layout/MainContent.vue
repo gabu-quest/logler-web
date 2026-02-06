@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { NTabs, NTabPane, NEmpty, NSpin } from 'naive-ui'
-import { PhListBullets, PhTreeStructure, PhChartBar, PhDatabase } from '@phosphor-icons/vue'
+import { PhListBullets, PhTreeStructure, PhChartBar, PhDatabase, PhChartLine } from '@phosphor-icons/vue'
 import { useUiStore } from '@/stores/ui'
+import type { ViewMode } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
 import LogViewer from '@/components/log-viewer/LogViewer.vue'
 import HierarchyView from '@/components/hierarchy/HierarchyView.vue'
 import WaterfallView from '@/components/waterfall/WaterfallView.vue'
 import SqlView from '@/components/sql/SqlView.vue'
+import MetricsView from '@/components/metrics/MetricsView.vue'
 
 const uiStore = useUiStore()
 const filesStore = useFilesStore()
 
 function handleTabChange(value: string) {
-  uiStore.setViewMode(value as 'logs' | 'hierarchy' | 'waterfall' | 'sql')
+  uiStore.setViewMode(value as ViewMode)
 }
 </script>
 
@@ -58,6 +60,14 @@ function handleTabChange(value: string) {
               SQL
             </template>
             <SqlView />
+          </NTabPane>
+
+          <NTabPane name="metrics" tab="Metrics">
+            <template #tab>
+              <PhChartLine :size="16" style="margin-right: 4px;" />
+              Metrics
+            </template>
+            <MetricsView />
           </NTabPane>
         </NTabs>
       </template>

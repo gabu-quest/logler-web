@@ -4,6 +4,7 @@ import { NVirtualList, NText } from 'naive-ui'
 import LogEntry from './LogEntry.vue'
 import LargeFileBanner from './LargeFileBanner.vue'
 import FileColorLegend from './FileColorLegend.vue'
+import FormatConfidenceBanner from '@/components/detection/FormatConfidenceBanner.vue'
 import { useLogsStore } from '@/stores/logs'
 import { useUiStore } from '@/stores/ui'
 import { useFilesStore } from '@/stores/files'
@@ -60,6 +61,7 @@ function handleCorrelationClick(traceId: string) {
 
 <template>
   <div class="log-viewer">
+    <FormatConfidenceBanner />
     <FileColorLegend />
     <LargeFileBanner />
     <NVirtualList

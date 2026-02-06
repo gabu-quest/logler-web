@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useFilesStore } from './files'
 import { useInvestigationStore } from './investigation'
 
-export type ViewMode = 'logs' | 'hierarchy' | 'waterfall' | 'sql'
+export type ViewMode = 'logs' | 'hierarchy' | 'waterfall' | 'sql' | 'metrics'
 
 export const useUiStore = defineStore('ui', () => {
   // Modal states

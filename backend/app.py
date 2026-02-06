@@ -70,6 +70,22 @@ try:
 except ImportError:
     HAS_EVENT_CORRELATOR = False
 
+# Metrics extraction (M5.4)
+try:
+    from logler.investigate import extract_metrics as logler_extract_metrics
+
+    HAS_METRICS = True
+except ImportError:
+    HAS_METRICS = False
+
+# Format detection (M6.5)
+try:
+    from logler.investigate import detect_formats as logler_detect_formats
+
+    HAS_FORMAT_DETECTOR = True
+except ImportError:
+    HAS_FORMAT_DETECTOR = False
+
 # Configuration
 LOG_ROOT = Path(os.environ.get("LOGLER_ROOT", ".")).expanduser().resolve()
 DIST_DIR = Path(__file__).parent.parent / "dist"
@@ -1015,6 +1031,60 @@ def create_app() -> FastAPI:
             cluster["entries"] = slim_entries
 
         return result
+
+    # ================================================================
+    # Metrics API (M5.4)
+    # ================================================================
+
+    class MetricsExtractRequest(BaseModel):
+        paths: List[str]
+        fields: Optional[List[str]] = None
+        bucket_size: Optional[str] = "5s"
+        anomaly_threshold: Optional[float] = 2.0
+
+    @app.post("/api/metrics/extract")
+    async def extract_metrics_endpoint(request: MetricsExtractRequest):
+        """Extract numeric values and compute time-series statistics."""
+        if not HAS_METRICS:
+            return {"error": "Metrics extraction not available. Upgrade logler."}
+
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+
+        try:
+            result = logler_extract_metrics(
+                files=validated_paths,
+                fields=request.fields,
+                bucket_size=request.bucket_size,
+                anomaly_threshold=request.anomaly_threshold or 2.0,
+            )
+            return result
+        except Exception as e:
+            return {"error": f"Metrics extraction failed: {e}", "fields": {}}
+
+    # ================================================================
+    # Format Detection API (M6.5)
+    # ================================================================
+
+    class FormatDetectRequest(BaseModel):
+        paths: List[str]
+        sample_size: Optional[int] = 50
+
+    @app.post("/api/formats/detect")
+    async def detect_formats_endpoint(request: FormatDetectRequest):
+        """Auto-detect log format for each file with confidence scoring."""
+        if not HAS_FORMAT_DETECTOR:
+            return {"error": "Format detector not available. Upgrade logler."}
+
+        validated_paths = [str(_ensure_within_root(Path(p))) for p in request.paths]
+
+        try:
+            result = logler_detect_formats(
+                files=validated_paths,
+                sample_size=request.sample_size or 50,
+            )
+            return result
+        except Exception as e:
+            return {"error": f"Format detection failed: {e}", "files": {}}
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
