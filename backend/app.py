@@ -45,8 +45,8 @@ except ImportError:
 
 # Config and builtin formats (M1.4)
 try:
-    from logler.config import find_config, load_config, FormatConfig, LoglerConfig
-    from logler.builtin_formats import get_builtin_formats, list_builtin_format_names
+    from logler.config import find_config, load_config, LoglerConfig
+    from logler.builtin_formats import get_builtin_formats
     from logler.safe_regex import safe_compile
 
     HAS_FORMAT_CONFIG = True
@@ -777,8 +777,6 @@ def create_app() -> FastAPI:
         """Test a regex pattern against sample log lines."""
         if not HAS_FORMAT_CONFIG:
             return {"error": "Format config not available. Upgrade logler."}
-
-        import re as _re
 
         try:
             compiled = safe_compile(request.regex)

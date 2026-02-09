@@ -4,8 +4,6 @@ import re
 import sys
 from unittest.mock import MagicMock
 
-import pytest
-
 _app = sys.modules["backend.app"]
 
 
