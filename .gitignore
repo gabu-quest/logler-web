@@ -4,6 +4,7 @@ node_modules/
 
 # Build output
 dist/
+src/logler_web/static/
 *.egg-info/
 __pycache__/
 *.pyc
